@@ -9,6 +9,11 @@ var sct = {};
 var idx = 0;
 var runList = {};
 
+var cp = require('child_process');
+for (var i =0; i <= 2; i++) {
+ 	cp.fork(__dirname + '/socket-test-2.js');
+ }; 
+
 function Worker(socket, id){
 	var _id = socket.id||id;
 	var _inUse = false;
@@ -89,6 +94,11 @@ function WorkerDispatcher(id){
 		delete list[id];
 		return [_idle,_busy];
 	}
+	var _removeWorkerFromById = function(workerId, list){
+		var id = workerId;
+		delete list[id];
+		return [_idle,_busy];
+	}
 	var _getWorkerFrom = function(id, list){
 		if(list[id])
 			return list[id];
@@ -117,6 +127,8 @@ function WorkerDispatcher(id){
 	}
 	this.removeDeadWorker = function(worker){
 		//todo: add validation of worker
+		if(typeof worker === string)
+			return _removeWorkerFromById(worker, _idle);
 		return _removeWorkerFrom(worker, _idle);
 	}
 	this.getList = function(){
@@ -145,6 +157,18 @@ io.sockets.on('connection', function (socket) {
 	// });
 });
 
+io.sockets.on('disconnection', function (socket) {
+	//console.warn(socket);
+	var workerId = socket.id;
+	wd.removeDeadWorker(workerId);
+});
+
+// setInterval(function(){
+	
+// },1000);
+
+
+
 http.createServer(function (req, res) {
 	//res.writeHead(200, {'Content-Type': 'text/plain'});
 	//res.end('Hello World\n');
@@ -160,6 +184,7 @@ http.createServer(function (req, res) {
 			wd.returnIdleWorker(worker);
 		});
 	}else{
+		cp.fork(__dirname + '/socket-test-2.js');
 		var a = setInterval(function(){
 			var worker=wd.getIdleWorker();
 			if(worker){
