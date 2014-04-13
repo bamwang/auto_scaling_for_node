@@ -9,6 +9,8 @@ var sct = {};
 var idx = 0;
 var runList = {};
 
+var MAX_WORKER = 5;
+
 var cp = require('child_process');
 for (var i =0; i <= 2; i++) {
  	cp.fork(__dirname + '/socket-test-2.js');
@@ -40,6 +42,9 @@ function Worker(socket, id){
 	}
 	this.getID = function(){
 		return _id;
+	}
+	this.kill = function(){
+		_socket.emit("kill");
 	}
 }
 
@@ -127,12 +132,31 @@ function WorkerDispatcher(id){
 	}
 	this.removeDeadWorker = function(worker){
 		//todo: add validation of worker
-		if(typeof worker === string)
-			return _removeWorkerFromById(worker, _idle);
-		return _removeWorkerFrom(worker, _idle);
+		if(typeof worker === "string"){
+			_removeWorkerFromById(worker, _idle);
+			_removeWorkerFromById(worker, _busy);
+		}else{
+			_removeWorkerFrom(worker, _idle);
+			_removeWorkerFrom(worker, _busy);
+		}
 	}
 	this.getList = function(){
 		return [_idle,_busy];
+	}
+	this.getAliveWorker = function(){
+		var idInIdle=Object.keys(_idle);
+		var idInBusy=Object.keys(_busy);
+		return idInBusy.length+idInIdle.length;
+	}
+	this.killIdleWorker = function(){
+		var ids=Object.keys(_idle);
+		if(ids.length>0){
+			var id = ids[0];
+			var worker = _getWorkerFrom(id, _idle);
+			worker.kill();
+			this.removeDeadWorker(worker);
+			return [_idle,_busy];
+		}
 	}
 }
 
@@ -157,15 +181,15 @@ io.sockets.on('connection', function (socket) {
 	// });
 });
 
-io.sockets.on('disconnection', function (socket) {
+io.sockets.on('disconnect', function (socket) {
 	//console.warn(socket);
 	var workerId = socket.id;
 	wd.removeDeadWorker(workerId);
 });
 
-// setInterval(function(){
-	
-// },1000);
+setInterval(function(){
+	wd.killIdleWorker();
+},10000);
 
 
 
@@ -173,32 +197,38 @@ http.createServer(function (req, res) {
 	//res.writeHead(200, {'Content-Type': 'text/plain'});
 	//res.end('Hello World\n');
 	console.log(req.url);
-	var worker=wd.getIdleWorker();
-	if(worker){
-		var socket=worker.getSocket();
-		socket.emit('req', { req: req.url });
-		socket.on('res', function (data) {
-			res.writeHead(200, {'Content-Type': 'text/plain'});
-			//console.log( data.my );
-			res.end(data.my.toString());
-			wd.returnIdleWorker(worker);
-		});
-	}else{
-		cp.fork(__dirname + '/socket-test-2.js');
-		var a = setInterval(function(){
-			var worker=wd.getIdleWorker();
-			if(worker){
-				clearInterval(a);
-				var socket=worker.getSocket();
-				socket.emit('req', { req: req.url });
-				socket.on('res', function (data) {
-					res.writeHead(200, {'Content-Type': 'text/plain'});
-					//console.log( data.my );
-					res.end(data.my.toString());
-					wd.returnIdleWorker(worker);
-				});
-			}
-		},1);
+	if(req.url=='/debug' || req.url=='/favicon.ico' ){
+		res.writeHead(200, {'Content-Type': 'text/plain'});
+		res.end(util.inspect(wd.getList()));
+	}
+	else{
+		var worker=wd.getIdleWorker();
+		if(worker){
+			var socket=worker.getSocket();
+			socket.emit('req', { req: req.url });
+			socket.on('res', function (data) {
+				res.writeHead(200, {'Content-Type': 'text/plain'});
+				//console.log( data.my );
+				res.end(data.my.toString());
+				wd.returnIdleWorker(worker);
+			});
+		}else{
+			//if(wd.getAliveWorker()<MAX_WORKER) cp.fork(__dirname + '/socket-test-2.js');
+			var a = setInterval(function(){
+				var worker=wd.getIdleWorker();
+				if(worker){
+					clearInterval(a);
+					var socket=worker.getSocket();
+					socket.emit('req', { req: req.url });
+					socket.on('res', function (data) {
+						res.writeHead(200, {'Content-Type': 'text/plain'});
+						//console.log( data.my );
+						res.end(data.my.toString());
+						wd.returnIdleWorker(worker);
+					});
+				}
+			},1);
+		}
 	}	
 	
 }).listen(1337, '127.0.0.1');
