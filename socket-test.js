@@ -8,11 +8,12 @@ var http = require('http');
 var sct = {};
 var idx = 0;
 var runList = {};
-
-var MAX_WORKER = 5;
+var MIN_WORKER = 10;
+var MAX_WORKER = 1000;
 
 var cp = require('child_process');
-for (var i =0; i <= 2; i++) {
+var i = 0
+for (; i <= MIN_WORKER; i++) {
  	cp.fork(__dirname + '/socket-test-2.js');
  }; 
 
@@ -188,8 +189,9 @@ io.sockets.on('disconnect', function (socket) {
 });
 
 setInterval(function(){
-	wd.killIdleWorker();
-},10000);
+	if(i>MIN_WORKER)
+		wd.killIdleWorker(),i--;
+},1000);
 
 
 
@@ -213,7 +215,7 @@ http.createServer(function (req, res) {
 				wd.returnIdleWorker(worker);
 			});
 		}else{
-			//if(wd.getAliveWorker()<MAX_WORKER) cp.fork(__dirname + '/socket-test-2.js');
+			if(i<MAX_WORKER) cp.fork(__dirname + '/socket-test-2.js'),i++;
 			var a = setInterval(function(){
 				var worker=wd.getIdleWorker();
 				if(worker){
