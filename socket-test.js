@@ -173,10 +173,11 @@ io.sockets.on('connection', function (socket) {
 	//console.warn(worker.getID());
 	//sEle.setSocket(socket);
 	wd.addNewWorker(worker);
-	console.log(wd.getList());
+	//console.log(wd.getList());
 	socket.emit('news', { hello: 'world' });
 	socket.on('my other event', function (data) {
-		console.log(data);
+		console.log("host  : " , socket.id);
+		console.log("host  : " , data);
 	});
 	
 	// http.get('/:n', function(req, res) {
