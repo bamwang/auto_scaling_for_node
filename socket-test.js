@@ -10,11 +10,12 @@ var idx = 0;
 var runList = {};
 var MIN_WORKER = 10;
 var MAX_WORKER = 1000;
+var WORKER_FILE_NAME = 'socket-test-worker.js';
 
 var cp = require('child_process');
 var i = 0
 for (; i <= MIN_WORKER; i++) {
- 	cp.fork(__dirname + '/socket-test-worker.js');
+ 	cp.fork(__dirname + '/' + WORKER_FILE_NAME);
  }; 
 
 function Worker(socket, id){
@@ -215,7 +216,7 @@ http.createServer(function (req, res) {
 				wd.returnIdleWorker(worker);
 			});
 		}else{
-			if(i<MAX_WORKER) cp.fork(__dirname + '/socket-test-2.js'),i++;
+			if(i<MAX_WORKER) cp.fork(__dirname + '/' + WORKER_FILE_NAME),i++;
 			var a = setInterval(function(){
 				var worker=wd.getIdleWorker();
 				if(worker){
