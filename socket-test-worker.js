@@ -11,11 +11,11 @@ function fib(n) {
 
 socket = io.connect('http://localhost:6501', {reconnect: true});
   socket.on('news', function (data) {
-    console.log(data);
+    console.log('worker:', data);
     socket.emit('my other event', { my: 'data' });
   });
   socket.on('req', function (data) {
-    console.log(data);
+    console.log('worker:',data)
     var n = data.req.substr(1);
     if(isNaN(n)) n = 1;
     var result = fib(n);
