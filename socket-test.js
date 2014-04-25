@@ -8,13 +8,14 @@ var http = require('http');
 var sct = {};
 var idx = 0;
 var runList = {};
-var MIN_WORKER = 10;
-var MAX_WORKER = 1000;
+var MIN_WORKER = process.argv[1]>1 ? process.argv[1] : 2;
+var MAX_WORKER = process.argv[2]>process.argv[1] ? process.argv[2] : 4;
+
 var WORKER_FILE_NAME = 'socket-test-worker.js';
 
 var cp = require('child_process');
 var i = 0
-for (; i <= MIN_WORKER; i++) {
+for (; i < MIN_WORKER; i++) {
  	cp.fork(__dirname + '/' + WORKER_FILE_NAME);
  }; 
 
