@@ -14,7 +14,7 @@ var MAX_WORKER = 1000;
 var cp = require('child_process');
 var i = 0
 for (; i <= MIN_WORKER; i++) {
- 	cp.fork(__dirname + '/socket-test-2.js');
+ 	cp.fork(__dirname + '/socket-test-worker.js');
  }; 
 
 function Worker(socket, id){
