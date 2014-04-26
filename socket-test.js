@@ -3,13 +3,14 @@ var util = require('util');
 // var express = require('express');
 // var app = express();
 var http = require('http');
+var numCPUs = require('os').cpus().length;
 //http.createServer(3000);
 
 var sct = {};
 var idx = 0;
 var runList = {};
-var MIN_WORKER = process.argv[2]>1 ? process.argv[2] : 2;
-var MAX_WORKER = process.argv[3]>process.argv[2] ? process.argv[3] : MIN_WORKER * 2;
+var MIN_WORKER = process.argv[2]>1 ? process.argv[2] : numCPUs;
+var MAX_WORKER = process.argv[3]>process.argv[2] ? process.argv[3] : numCPUs;
 
 console.warn(process.argv);
 
