@@ -154,13 +154,15 @@ function WorkerDispatcher(id){
 		var idInBusy=Object.keys(_busy);
 		return idInBusy.length+idInIdle.length;
 	}
-	this.killIdleWorker = function(){
+	this.killIdleWorker = function(cb){
 		var ids=Object.keys(_idle);
 		if(ids.length>0){
+			console.log("idel: ", ids.length);
 			var id = ids[0];
 			var worker = _getWorkerFrom(id, _idle);
 			worker.kill();
 			this.removeDeadWorker(worker);
+			cb();
 			return [_idle,_busy];
 		}
 	}
@@ -177,8 +179,8 @@ io.sockets.on('connection', function (socket) {
 	//console.log(wd.getList());
 	socket.emit('news', { hello: 'world' });
 	socket.on('my other event', function (data) {
-		console.log("host  : " , socket.id);
-		console.log("host  : " , data);
+		console.log("host  : " , socket.id ,"added.");
+		//console.log("host  : " , data);
 	});
 	
 	// http.get('/:n', function(req, res) {
@@ -196,8 +198,11 @@ io.sockets.on('disconnect', function (socket) {
 
 setInterval(function(){
 	if(i>MIN_WORKER)
-		wd.killIdleWorker(),i--;
-},1000);
+		wd.killIdleWorker(function(){
+			i--;
+		});
+	console.log("host: check idle workers. num of workers is ",i);
+},10000);
 
 
 
@@ -221,7 +226,11 @@ http.createServer(function (req, res) {
 				wd.returnIdleWorker(worker);
 			});
 		}else{
-			if(i<MAX_WORKER) cp.fork(__dirname + '/' + WORKER_FILE_NAME),i++;
+			if(i<MAX_WORKER){
+				cp.fork(__dirname + '/' + WORKER_FILE_NAME);
+				i++;
+				console.log("host: num of worker is ",i);
+			} 
 			var a = setInterval(function(){
 				var worker=wd.getIdleWorker();
 				if(worker){
