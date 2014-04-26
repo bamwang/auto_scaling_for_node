@@ -204,7 +204,7 @@ setInterval(function(){
 http.createServer(function (req, res) {
 	//res.writeHead(200, {'Content-Type': 'text/plain'});
 	//res.end('Hello World\n');
-	console.log(req.url);
+	//console.log(req.url);
 	if(req.url=='/debug' || req.url=='/favicon.ico' ){
 		res.writeHead(200, {'Content-Type': 'text/plain'});
 		res.end(util.inspect(wd.getList()));

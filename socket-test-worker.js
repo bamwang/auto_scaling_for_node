@@ -15,11 +15,11 @@ socket = io.connect('http://localhost:6501', {reconnect: true});
     socket.emit('my other event', { my: 'data' });
   });
   socket.on('req', function (data) {
-    console.log('worker:',data)
+    //console.log('worker:',data)
     var n = data.req.substr(1);
     if(isNaN(n)) n = 1;
     var result = fib(n);
-    console.log(result);
+    //console.log(result);
     socket.emit('res', { my: result });
   });
   socket.on('kill', function (data) {
