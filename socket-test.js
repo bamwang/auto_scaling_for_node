@@ -7,6 +7,7 @@ var numCPUs = require('os').cpus().length;
 //http.createServer(3000);
 
 var addChild = false;
+
 var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
 var MAX_WORKER = parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
 console.warn(process.argv[2], process.argv[3]);
@@ -246,21 +247,21 @@ setInterval(function(){
 	if(task){
 		var req = task.getReq();
 		var res = task.getRes();
-		wait(req, res);
+		proc(req, res);
 	}
 
 },0)
 
 
 
-function wait(req, res) {
+function proc(req, res) {
 	if(req.url=='/debug' || req.url=='/favicon.ico' ){
 		res.writeHead(200, {'Content-Type': 'text/plain'});
 		res.end(util.inspect(wd.getList()));
 	}else{
 		var worker=wd.getIdleWorker();
 		if(worker){
-			addChild = false;
+			//addChild = false;
 			var socket=worker.getSocket();
 			socket.emit('req', { req: req.url });
 			socket.on('res', function (data) {
@@ -270,7 +271,12 @@ function wait(req, res) {
 				wd.returnIdleWorker(worker);
 			});
 		}else{
-			addChild = true;
+			//addChild = true;
+			if(i<MAX_WORKER && i < taskManager.length){
+				cp.fork(__dirname + '/' + WORKER_FILE_NAME);
+				i++;
+				console.log("host: num of worker is ",i);
+			}
 			var a = setInterval(function(){
 				var worker=wd.getIdleWorker();
 				if(worker){
@@ -284,18 +290,9 @@ function wait(req, res) {
 						wd.returnIdleWorker(worker);
 					});
 				}
-			},1);
+			},0);
 		}
 	}	
 }
 
 
-var addingChild = setInterval(
-	function(){
-		if(i<MAX_WORKER && addChild){
-				cp.fork(__dirname + '/' + WORKER_FILE_NAME);
-				i++;
-				console.log("host: num of worker is ",i);
-		}
-	}
-,1);
