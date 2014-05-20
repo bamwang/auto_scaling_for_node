@@ -6,9 +6,6 @@ var http = require('http');
 var numCPUs = require('os').cpus().length;
 //http.createServer(3000);
 
-var sct = {};
-var idx = 0;
-var runList = {};
 var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
 var MAX_WORKER = parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
 console.warn(process.argv[2], process.argv[3]);
