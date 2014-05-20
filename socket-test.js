@@ -6,6 +6,7 @@ var http = require('http');
 var numCPUs = require('os').cpus().length;
 //http.createServer(3000);
 
+var addChild = false;
 var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
 var MAX_WORKER = parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
 console.warn(process.argv[2], process.argv[3]);
@@ -18,6 +19,32 @@ var i = 0
 for (; i < MIN_WORKER; i++) {
  	cp.fork(__dirname + '/' + WORKER_FILE_NAME);
  }; 
+
+function Task(req, res, id){
+	var _req = req;
+	var _res = res;
+	var _id = id;
+	this.getReq = function(){
+		return _req;
+	}
+	this.getRes = function(){
+		return _res;
+	}
+	this.getID = function(){
+		return _id;
+	}
+	this.setReq = function(req){
+		_req = req;
+	}
+	this.setRes = function(res){
+		_res = res;
+	}
+	this.setID = function(id){
+		_id = id;
+	}
+}
+
+taskManager = new Array();
 
 function Worker(socket, id){
 	var _id = socket.id||id;
@@ -207,13 +234,33 @@ http.createServer(function (req, res) {
 	//res.writeHead(200, {'Content-Type': 'text/plain'});
 	//res.end('Hello World\n');
 	//console.log(req.url);
+	var task = new Task(req, res);
+	taskManager.push(task);
+	
+}).listen(1337, '127.0.0.1');
+
+
+setInterval(function(){
+	var task = taskManager.length > 0 ? taskManager.shift() : undefined;
+
+	if(task){
+		var req = task.getReq();
+		var res = task.getRes();
+		wait(req, res);
+	}
+
+},0)
+
+
+
+function wait(req, res) {
 	if(req.url=='/debug' || req.url=='/favicon.ico' ){
 		res.writeHead(200, {'Content-Type': 'text/plain'});
 		res.end(util.inspect(wd.getList()));
-	}
-	else{
+	}else{
 		var worker=wd.getIdleWorker();
 		if(worker){
+			addChild = false;
 			var socket=worker.getSocket();
 			socket.emit('req', { req: req.url });
 			socket.on('res', function (data) {
@@ -223,11 +270,7 @@ http.createServer(function (req, res) {
 				wd.returnIdleWorker(worker);
 			});
 		}else{
-			if(i<MAX_WORKER){
-				cp.fork(__dirname + '/' + WORKER_FILE_NAME);
-				i++;
-				console.log("host: num of worker is ",i);
-			} 
+			addChild = true;
 			var a = setInterval(function(){
 				var worker=wd.getIdleWorker();
 				if(worker){
@@ -244,7 +287,15 @@ http.createServer(function (req, res) {
 			},1);
 		}
 	}	
-	
-}).listen(1337, '127.0.0.1');
+}
 
 
+var addingChild = setInterval(
+	function(){
+		if(i<MAX_WORKER && addChild){
+				cp.fork(__dirname + '/' + WORKER_FILE_NAME);
+				i++;
+				console.log("host: num of worker is ",i);
+		}
+	}
+,1);
