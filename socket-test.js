@@ -202,19 +202,42 @@ function WorkerDispatcher(id){
 	}
 }
 
+function Cooperator(socket, id){
+	var _id = socket.id||id;
+	var _inUse = false;
+	var _socket = socket;
+	this.getID = function(){
+		return _id;
+	}
+}
+
+function cooperatorManager(){
+	var CooperatorList =function(){};
+	var _list = new CooperatorList();
+	this.addCooperator = function(cooperator){
+		var id = cooperator.getID();
+		list[id] = cooperator;
+		return [_list];
+	}
+	this.getCooperator = function(){
+
+	}
+}
+
+
 sList = {};
 var wd = new WorkerDispatcher();
 io.sockets.on('connection', function (socket) {
 	//console.warn(socket);
-	var worker = new Worker(socket);
-	//console.warn(worker.getID());
-	//sEle.setSocket(socket);
-	wd.addNewWorker(worker);
-	//console.log(wd.getList());
-	socket.emit('news', { hello: 'world' });
-	socket.on('my other event', function (data) {
+	socket.emit('who', { hello: 'world' });
+	socket.on('worker', function (data) {
 		console.log("host  : " , socket.id ,"added.");
-		//console.log("host  : " , data);
+		var worker = new Worker(socket);
+		//console.warn(worker.getID());
+		//sEle.setSocket(socket);
+		wd.addNewWorker(worker);
+		//console.log(wd.getList());
+	});
 	});
 	
 	// http.get('/:n', function(req, res) {

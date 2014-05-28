@@ -10,9 +10,9 @@ function fib(n) {
 
 
 socket = io.connect('http://localhost:6501', {reconnect: true});
-  socket.on('news', function (data) {
+  socket.on('who', function (data) {
     console.log('worker:', data);
-    socket.emit('my other event', { my: 'data' });
+    socket.emit('worker', { my: 'data' });
   });
   socket.on('req', function (data) {
     //console.log('worker:',data)
