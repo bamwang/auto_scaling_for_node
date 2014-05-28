@@ -46,6 +46,15 @@ function Task(req, res, id){
 }
 
 taskManager = new Array();
+taskManager.st = new Array();
+taskManager.add = function (task){
+	this.push(task);
+	this.st.push(new Date().getTime());
+}
+taskManager.get = function (){
+	return this.shift();
+}
+
 
 function Worker(socket, id){
 	var _id = socket.id||id;
@@ -236,13 +245,13 @@ http.createServer(function (req, res) {
 	//res.end('Hello World\n');
 	//console.log(req.url);
 	var task = new Task(req, res);
-	taskManager.push(task);
+	taskManager.add(task);
 	
 }).listen(1337, '127.0.0.1');
 
 
 setInterval(function(){
-	var task = taskManager.length > 0 ? taskManager.shift() : undefined;
+	var task = taskManager.length > 0 ? taskManager.get() : undefined;
 
 	if(task){
 		var req = task.getReq();
