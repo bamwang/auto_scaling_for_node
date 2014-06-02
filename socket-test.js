@@ -238,8 +238,6 @@ io.sockets.on('connection', function (socket) {
 		wd.addNewWorker(worker);
 		//console.log(wd.getList());
 	});
-	});
-	
 	// http.get('/:n', function(req, res) {
 	// 	app.send(req.toSource());
 	// 	socket.emit('req', { req: req.url });
