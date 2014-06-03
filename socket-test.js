@@ -16,10 +16,6 @@ console.warn(MIN_WORKER ,MAX_WORKER);
 var WORKER_FILE_NAME = 'socket-test-worker.js';
 
 var cp = require('child_process');
-var i = 0
-for (; i < MIN_WORKER; i++) {
- 	cp.fork(__dirname + '/' + WORKER_FILE_NAME);
- }; 
 
 function Task(req, res, id){
 	var _req = req;
@@ -49,7 +45,7 @@ taskManager = new Array();
 taskManager.st = new Array();
 taskManager.add = function (task){
 	this.push(task);
-	this.st.push(new Date().getTime());
+	//this.st.push(new Date().getTime());
 }
 taskManager.get = function (){
 	return this.shift();
@@ -89,11 +85,12 @@ function Worker(socket, id){
 }
 
 function WorkerDispatcher(id){
-
+	var _localCP = 0;
 	var IdleList =function(){};
 	var BusyList =function(){};
 	var _idle = new IdleList();
 	var _busy = new BusyList();
+	var cm = new CooperatorManager();
 	//private
 	this.checkArg = function(){}
 	var _addWorkerTo = function(worker, list){
@@ -188,7 +185,8 @@ function WorkerDispatcher(id){
 		var idInBusy=Object.keys(_busy);
 		return idInBusy.length+idInIdle.length;
 	}
-	this.killIdleWorker = function(cb){
+	this.killIdleWorker = function(){
+		if(_localCP <= MIN_WORKER) return;
 		var ids=Object.keys(_idle);
 		if(ids.length>0){
 			console.log("idel: ", ids.length);
@@ -196,9 +194,35 @@ function WorkerDispatcher(id){
 			var worker = _getWorkerFrom(id, _idle);
 			worker.kill();
 			this.removeDeadWorker(worker);
-			cb();
+			_localCP--;
 			return [_idle,_busy];
 		}
+	}
+	/*
+	从后追加的cooperator中删除
+	*/
+	this.generateWorker = function(taskManager){
+		if(_localCP < MAX_WORKER && _localCP < taskManager.length){
+			console.log(_localCP, MAX_WORKER);
+			cp.exec('node ' + __dirname + '/' + WORKER_FILE_NAME);
+			// cp.fork(__dirname + '/' + WORKER_FILE_NAME);
+			_localCP++;
+		}else{
+			cm.generateWorker();
+		}
+	}
+	this.initWorker = function(){
+		while(_localCP < MIN_WORKER){
+			console.log(_localCP, MIN_WORKER);
+			cp.exec('node ' + __dirname + '/' + WORKER_FILE_NAME);
+			_localCP++;
+		}
+	}
+	this.getLocalCPNUM = function(){
+		return _localCP;
+	}
+	this.addCooperator = function(cooperator){
+		cm.addCooperator(cooperator);
 	}
 }
 
@@ -206,37 +230,102 @@ function Cooperator(socket, id){
 	var _id = socket.id||id;
 	var _inUse = false;
 	var _socket = socket;
+	var _full = false;
+	var _localCP = 0;
+	var _MAX = 100;
 	this.getID = function(){
 		return _id;
 	}
+	this.getSocket = function(){
+		return _socket;
+	}
+	this.setID = function(id){
+		_id = id;
+	}
+	this.setSocket = function(socket){
+		_socket = socket;
+	}
+	this.kill = function(){
+		_socket.emit('kill');
+	}
+	this.getFull = function(){
+		return _full;
+	}
+	this.setFull = function(full){
+		_full = full;
+	}
+	this.generateWorker = function(){
+		_socket.emit('generateWorker');
+		_localCP ++;
+		if(_localCP >= _MAX){
+			this.setFull(true);
+		}
+	}
 }
 
-function cooperatorManager(){
+function CooperatorManager(){
+	var _waiting = 0;
 	var CooperatorList =function(){};
-	var _list = new CooperatorList();
+	var _list = [];
+	this.generateWorker = function(){
+		var cooperator = this.getTop();
+		if( cooperator && !cooperator.getFull() ){
+			cooperator.generateWorker();
+		}else if( _waiting == 0 ) {
+			_waiting ++;
+			console.log('_waiting:', _waiting);
+			/*
+			控制生成频率
+			*/
+			var self = this;
+			this.generateCooperator(function(){
+				self.generateWorker();
+			});
+		}
+	}
 	this.addCooperator = function(cooperator){
-		var id = cooperator.getID();
-		list[id] = cooperator;
+		//var id = cooperator.getID();
+		_waiting --;
+		_list.unshift( cooperator );
 		return [_list];
 	}
-	this.getCooperator = function(){
-
+	this.generateCooperator = function(cb){
+		var cmd = 'node socket-test-cooperator.js';
+		var option = {};
+		var cb = undefined;
+		cp.exec(cmd, option, cb);
+	}
+	this.getTop = function(){
+		return _list[0];
 	}
 }
-
 
 sList = {};
 var wd = new WorkerDispatcher();
+
+wd.initWorker(taskManager);
+
 io.sockets.on('connection', function (socket) {
 	//console.warn(socket);
 	socket.emit('who', { hello: 'world' });
-	socket.on('worker', function (data) {
-		console.log("host  : " , socket.id ,"added.");
-		var worker = new Worker(socket);
-		//console.warn(worker.getID());
-		//sEle.setSocket(socket);
-		wd.addNewWorker(worker);
-		//console.log(wd.getList());
+	socket.on('who', function (data) {
+		var type = data.type;
+		if(type == 'worker'){
+			console.log("worker  : " , socket.id ,"added.");
+			var worker = new Worker(socket);
+			//console.warn(worker.getID());
+			//sEle.setSocket(socket);
+			wd.addNewWorker(worker);
+			//console.log(wd.getList());
+		}else if(type == 'cooperator'){
+			console.log("cooperator  : " , socket.id ,"added.");
+			var cooperator = new Cooperator(socket);
+			wd.addCooperator(cooperator);
+			socket.on('full', function (data) {
+				var isFull = data.isFull;
+				cooperator.setFull(isFull);
+			});
+		}
 	});
 	// http.get('/:n', function(req, res) {
 	// 	app.send(req.toSource());
@@ -252,11 +341,8 @@ io.sockets.on('disconnect', function (socket) {
 });
 
 setInterval(function(){
-	if(i>MIN_WORKER)
-		wd.killIdleWorker(function(){
-			i--;
-		});
-	console.log("host: check idle workers. num of workers is ",i);
+	wd.killIdleWorker();
+	console.log("host: check idle workers. num of workers is ",wd.getLocalCPNUM());
 },10000);
 
 
@@ -280,7 +366,7 @@ setInterval(function(){
 		proc(req, res);
 	}
 
-},0)
+},3)
 
 
 
@@ -302,11 +388,7 @@ function proc(req, res) {
 			});
 		}else{
 			//addChild = true;
-			if(i<MAX_WORKER && i < taskManager.length){
-				cp.fork(__dirname + '/' + WORKER_FILE_NAME);
-				i++;
-				console.log("host: num of worker is ",i);
-			}
+			wd.generateWorker(taskManager);
 			var a = setInterval(function(){
 				var worker=wd.getIdleWorker();
 				if(worker){
@@ -326,3 +408,13 @@ function proc(req, res) {
 }
 
 
+// var addingChild = setInterval(
+// 	function(){
+		
+// 	}
+// ,50);
+
+
+// setInterval(function(){
+// 	console.log(taskManager.st);
+// },2000);

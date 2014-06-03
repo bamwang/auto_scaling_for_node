@@ -12,7 +12,7 @@ function fib(n) {
 socket = io.connect('http://localhost:6501', {reconnect: true});
   socket.on('who', function (data) {
     console.log('worker:', data);
-    socket.emit('worker', { my: 'data' });
+    socket.emit('who', { type: 'worker' });
   });
   socket.on('req', function (data) {
     //console.log('worker:',data)
