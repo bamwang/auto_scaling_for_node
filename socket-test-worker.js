@@ -8,19 +8,16 @@ function fib(n) {
   }
 }
 
-
-socket = io.connect('http://localhost:6501', {reconnect: true});
-  socket.on('who', function (data) {
-    console.log('worker:', data);
-    socket.emit('worker', { my: 'data' });
-  });
+socket = io.connect('http://localhost:6600', {reconnect: true});
+  socket.emit('ready', { my: 'data' });
   socket.on('req', function (data) {
     //console.log('worker:',data)
     var n = data.req.substr(1);
     if(isNaN(n)) n = 1;
     var result = fib(n);
     //console.log(result);
-    socket.emit('res', { my: result });
+    data.html = result.toString();
+    socket.emit('res', data);
   });
   socket.on('kill', function (data) {
   	console.log("exited");
