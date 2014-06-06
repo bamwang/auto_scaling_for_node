@@ -167,10 +167,9 @@ function CooperatorManager(ioServer){
 		_lastMaxWorker = _list[_list.length-1].getMaxWorker();
 	}
 	this._generateCooperator = function(cb){
-		var cmd = 'node socket-test-cooperator.js 4 100';
-		var option = {};
-		var cb = undefined;
-		cp.exec(cmd);
+		var file = 'socket-test-cooperator.js';
+		var arg = ' 4 100';
+		var child = cp.exec('node '+ file + arg);
 		_waiting ++ ;
 	}
 	this._getTop = function(){
