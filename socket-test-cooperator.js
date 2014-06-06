@@ -245,7 +245,7 @@ function WorkerDispatcher(id){
     if(_localCP < MAX_WORKER && _localCP < taskManager.length){
       //console.log(_localCP, MAX_WORKER);
       //cp.exec('node ' + __dirname + '/' + WORKER_FILE_NAME);
-      cp.fork(WORKER_FILE_NAME);
+      cp.fork(WORKER_FILE_NAME, [port]);
       _localCP++;
     }
   }
