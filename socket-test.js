@@ -170,6 +170,9 @@ function CooperatorManager(ioServer){
 		var file = 'socket-test-cooperator.js';
 		var arg = ' 4 100';
 		var child = cp.exec('node '+ file + arg);
+		child.stdout.on('data', function (data) {
+		  console.log('C:' + data);
+		});
 		_waiting ++ ;
 	}
 	this._getTop = function(){
@@ -178,7 +181,7 @@ function CooperatorManager(ioServer){
 	//public
 	this.setDesNum = function(num){
 		_desNum = num+1;
-		console.log('des : ',_desNum)
+		//console.log('des : ',_desNum)
 	}
 	this.sendTask = function(task){
 		//test

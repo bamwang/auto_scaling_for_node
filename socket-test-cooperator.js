@@ -7,8 +7,8 @@ var numCPUs = require('os').cpus().length;
 
 var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
 var MAX_WORKER = parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
-console.warn(process.argv[2], process.argv[3]);
-console.warn(MIN_WORKER ,MAX_WORKER);
+console.log(port, process.argv[2], process.argv[3]);
+console.log(port, MIN_WORKER ,MAX_WORKER);
 var i = 0;
 /*================= 
 connect to master
@@ -26,7 +26,7 @@ ioServer.sockets.on('connection', function (socket) {
   when my worker ready
   ==================*/
   socket.on('ready', function (data) {
-    console.log("host  : " , socket.id ,"added.");
+    console.log("host " + port + " : " , socket.id ,"added.");
     var worker = new Worker(socket);
     wd.addNewWorker(worker);
     socket.on('res', function (data) {
@@ -57,7 +57,7 @@ when request comes
 mySocket.on('req',function(reqData){
   var data = reqData;
   reqManager.push(reqData);
-  console.log(reqManager.length);
+  //console.log("host " + port + " : " , reqManager.length);
 })
 
 
@@ -73,7 +73,7 @@ setInterval(function(){
 
  setInterval(function(){
   wd.killIdleWorker();
-  console.log("host: check idle workers. num of workers is ",wd.getLocalCPNUM());
+  console.log("host "+ port +": check idle workers. num of workers is ",wd.getLocalCPNUM());
  },10000);
 
 
@@ -231,7 +231,7 @@ function WorkerDispatcher(id){
     if(_localCP <= MIN_WORKER) return;
     var ids=Object.keys(_idle);
     if(ids.length>0){
-      console.log("idel: ", ids.length);
+      console.log("host " + port + " idel: ", ids.length);
       var id = ids[0];
       var worker = _getWorkerFrom(id, _idle);
       worker.kill();
