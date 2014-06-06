@@ -183,7 +183,7 @@ function CooperatorManager(ioServer){
 	}
 	this.sendTask = function(task){
 		//test
-		for(var i = 0; i < _list.length; i ++){
+		for(var i = 0; i < _idStack.length; i ++){
 			var cooperator = _list[_idStack[i]];
 			if( !cooperator.isFull() ){	
 				cooperator.sendTask(taskManager.shift());
