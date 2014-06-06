@@ -235,7 +235,7 @@ function WorkerDispatcher(id){
       var id = ids[0];
       var worker = _getWorkerFrom(id, _idle);
       worker.kill();
-      _localCP--;
+      //_localCP--;
       this.removeDeadWorker(worker);
       return [_idle,_busy];
     }
