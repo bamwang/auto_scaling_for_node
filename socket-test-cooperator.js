@@ -1,5 +1,5 @@
 var ioClient = require('socket.io-client');
-var port = 6600;
+var port = Math.floor( Math.random() * 50000 + 6000);
 var ioServer = require('socket.io').listen(port,{'log level': 1});
 var cp = require('child_process');
 var WORKER_FILE_NAME = 'socket-test-worker.js';
