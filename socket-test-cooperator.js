@@ -16,7 +16,10 @@ connect to master
 var mySocket = ioClient.connect('http://localhost:6501', {reconnect: true});
 
 mySocket.emit('ready', {maxWorker : MAX_WORKER});
-
+mySocket.on('kill', function(){
+  console.log("cooperator exited");
+  process.exit(0);
+})
 /*================= 
 when my worker connects
 ==================*/
