@@ -252,7 +252,7 @@ function WorkerDispatcher(id){
   this.initWorker = function(){
     while(_localCP < MIN_WORKER){
       //console.log(_localCP, MIN_WORKER);
-      cp.exec('node ' + __dirname + '/' + WORKER_FILE_NAME);
+      cp.fork(WORKER_FILE_NAME, [port]);
       _localCP++;
     }
   }
