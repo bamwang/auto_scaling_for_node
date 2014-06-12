@@ -239,8 +239,8 @@ function proc(taskManager) {
 	var req = taskManager[0].getReq();
 	var res = taskManager[0].getRes();
 	if(req.url=='/debug' || req.url=='/favicon.ico' ){
-		res.writeHead(200, {'Content-Type': 'text/plain'});
-		res.end(util.inspect(wd.getList()));
+		res.writeHead(404);
+		res.end();
 	}else{
 		cm.sendTask( taskManager );
 	}	
