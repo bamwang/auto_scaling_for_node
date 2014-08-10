@@ -168,7 +168,7 @@ function CooperatorManager(ioServer){
 	}
 	this._generateCooperator = function(cb){
 		var file = 'socket-test-cooperator.js';
-		var arg = ' 4 100';
+		var arg = ' 4 1000';
 		var child = cp.exec('node '+ file + arg);
 		child.stdout.on('data', function (data) {
 		  console.log('C:' + data);

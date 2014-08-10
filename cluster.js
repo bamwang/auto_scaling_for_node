@@ -1,6 +1,6 @@
 var cluster = require('cluster');
 var http = require('http');
-var numCPUs = require('os').cpus().length;
+var numCPUs = 100; //require('os').cpus().length;
 var util = require('util');
 var express = require('express');
 var app = express();
