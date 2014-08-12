@@ -130,7 +130,7 @@ function Worker(child, id){
   }
 
   var _onRes = function(message){
-    console.log(_id+' on res: ' +message.data.html);
+    // console.log(_id+' on res: ' +message.data.html);
     mySocket.emit('res', message.data);
     wd.returnIdleWorker(self);
   }
