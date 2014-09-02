@@ -1,0 +1,6 @@
+benchmark.sh: line 2:  8774 Killed: 9               ruby fib.rb $i
+
+real	1m58.916s
+user	1m34.399s
+sys	0m24.461s
+ruby
