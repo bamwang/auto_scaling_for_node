@@ -1,26 +1,19 @@
 var cluster = require('cluster');
 var http = require('http');
-var numCPUs = 100;//require('os').cpus().length;
+var numCPUs = 50;//require('os').cpus().length;
 var util = require('util');
 var express = require('express');
 var app = express();
 
-function cv(n, cb, data) {
-  var cv = require('openCV');
-  cv.readImage("./r.png", function(err, im){
-    im.detectObject(cv.FACE_CASCADE, {}, function(err, faces){
-    // console.log(err,faces);
-      for (var i=0;i<faces.length; i++){
-        var x = faces[i]
-        //im.ellipse(x.x + x.width/2, x.y + x.height/2, x.width/2, x.height/2);
-      }
-      return cb(JSON.stringify(faces));
-    });
-    // console.warn(err);
-    // im.canny(5, 500);
-    // im.save("./output.jpg");
-  })
+function str(n) {
+  var str='';
+  var part = '0';
+  for (var i = 0; i < n; i++) {
+    str += part;
+  };
+  return n;
 }
+
 
 
 if (cluster.isMaster) {
@@ -40,12 +33,8 @@ if (cluster.isMaster) {
  
 } else {
 	app.get('/:n', function(req, res) {
-	    // var number=fib(req.params.n);
-    cv(req.params.n, function(str){
-      data = str.toString();
-      res.send(''+data);
-    });
-
+	    var number=str(req.params.n);
+	    res.send(''+number);
 	});
 
 
