@@ -123,8 +123,6 @@ function process(req, res){
       // ctx.strokeRect(face.x-face.width*adjustRate/2, face.y-face.height*adjustRate/2, face.width * ( 1 + adjustRate ),face.height * ( 1 + adjustRate ));
       ctx4ef.drawImage(img, (-face.x+face.width*adjustRate/2)*resizeRate, (-face.y+face.height*adjustRate/2)*resizeRate, img.width*resizeRate, img.height*resizeRate );
       console.log(face);
-      ctx4ef = null;
-      ctx4fd = null;
       // res.write('<img src="' + canvasForEachFace.toDataURL() + '" />');
       // Caman(canvasForEachFace.toBuffer(), function () {
       //   // this.crop(200, 200 ,0 , 0);
@@ -151,6 +149,11 @@ function process(req, res){
     var time = new Date() - startTime;
     res.write('encrypt:'+(time/1000)+'\t');
     canvas = null;
+    ctx=null;
+    canvasForEachFace = null;
+    canvasForFaceDetetivision = null;
+    ctx4ef = null;
+    ctx4fd = null;
     /*
     var base64 = canvas.toDataURL();
     var encryptedData = cryptojs.Crypto.DES.encrypt( base64 , key );
@@ -166,14 +169,15 @@ function process(req, res){
         var time = new Date() - startTime;
         res.write('compress:'+(time/1000)+'\t');
 
-        // fs.writeFileSync('./test.dat', buffer);
-        // var time = new Date() - startTime;
-        // res.write('writeFileSync:'+(time/1000)+'\t');
-
+        fs.writeFileSync('./test.dat', buffer);
+        var time = new Date() - startTime;
+        res.write('writeFileSync:'+(time/1000)+'\t');
         var time = new Date() - startTime;
         res.end('end:'+(time/1000)+'\t');
       }
     });
+
+
     // fs.writeFileSync('./test.png', binary);
     // Caman(canvas.toBuffer(), function () {
     //   // this.crop(200, 200 ,0 , 0);
