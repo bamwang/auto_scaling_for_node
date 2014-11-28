@@ -6,7 +6,7 @@ var PORT = parseInt(process.argv[2])
 var processFunc = require('./canvas/process')
 
 
-function Res(socket, data){
+function Res(message, data){
   var _resBody = '';
   this.write = function(str){
     _resBody += str;
@@ -17,8 +17,9 @@ function Res(socket, data){
   this.end = function(str){
     var str = str || '';
     _resBody += str;
-    data.html = _resBody;
-    socket.emit('res', data);
+    message.data.html = _resBody;
+    message.type = 'res';
+    process.send(message);
   }
 }
 function Req(data){
@@ -26,21 +27,15 @@ function Req(data){
 }
 
 
-socket = io.connect('http://localhost:' + PORT, {reconnect: true});
-  socket.emit('ready', { my: 'data' });
-  socket.on('req', function (data) {
-    //console.log('worker:',data)
-    // var n = data.req;
-    // processFunc(n, function(str){
-    //   data.html = str.toString();
-    //   socket.emit('res', data);
-    //   // console.log(data);
-    // }, data.req);
-    req = new Req(data);
-    res = new Res(socket, data);
+process.on('message', function(message) {
+  if(message.type == 'req'){
+    req = new Req(message.data);
+    res = new Res(message);
     processFunc(req,res);
-  });
-  socket.on('kill', function (data) {
-  	console.log("exited");
-  	process.exit(0);
-  });
+  }
+  else if(message.type == 'kill'){
+    console.log("killed by message");
+    process.exit(0);
+  }
+});
+process.send({ type: 'ready' });

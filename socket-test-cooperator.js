@@ -5,7 +5,7 @@ var cp = require('child_process');
 var WORKER_FILE_NAME = 'socket-test-worker.js';
 var numCPUs = require('os').cpus().length;
 
-var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
+var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : 92;
 var MAX_WORKER = parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
 console.log(port, process.argv[2], process.argv[3]);
 console.log(port, MIN_WORKER ,MAX_WORKER);
@@ -77,7 +77,7 @@ setInterval(function(){
  setInterval(function(){
   wd.killIdleWorker();
   console.log("host "+ port +": check idle workers. num of workers is ",wd.getLocalCPNUM());
- },10000);
+ },60000);
 
 
 function proc(reqManager){
@@ -86,8 +86,15 @@ function proc(reqManager){
   var worker=wd.getIdleWorker();
     if(worker){
       //console.log('get one');
-      var socket=worker.getSocket();
-      socket.emit('req', reqManager.shift() );
+      var child=worker.getChild();
+      var req = reqManager.shift();
+      var message = {
+        type : 'req',
+        data : req
+      };
+      // console.log(message);
+      child.send( message );
+
 
     }else{
       //console.log('generate one');
@@ -96,16 +103,48 @@ function proc(reqManager){
 }
 
 
-function Worker(socket, id){
-  var _id = socket.id||id;
+function Worker(child, id){
+  var _id = child.id||id;
   var _inUse = false;
-  var _socket = socket;
-  this.setSocket = function(socket){
-    if(typeof socket !== 'object'){
-      console.error(typeof socket);
+  var _child = child;
+  var self = this;
+  //_init
+  _child.on('message',function(message){
+    switch( message.type ){
+      case 'ready':
+        _onReady();
+      break;
+      case 'res':
+        _onRes(message);
+      break;
+      // case 'killed':
+      //   _onKilled(message.data);
+      // break;
+      default:
+        console.log('undefined message type');
+      break;
+    }
+  })
+  var _onReady = function(){
+    console.log('child ready:'+ _id);
+    wd.addNewWorker(self);
+  }
+
+  var _onRes = function(message){
+    console.log(_id+' on res: ' +message.data.html);
+    mySocket.emit('res', message.data);
+    wd.returnIdleWorker(self);
+  }
+  // var _onKilled = function(){
+  //   console.log('on killed');
+  //   wd.removeDeadWorker(_id);
+  // }
+  this.setChild = function(child){
+    if(typeof child !== 'object'){
+      console.error(typeof child);
       return -1;
     }     
-    _socket = socket;
+    _child = child;
     return 0;
   }
   this.setInUse = function(status){
@@ -114,8 +153,8 @@ function Worker(socket, id){
     _inUse = status;
     return status;
   }
-  this.getSocket = function(){
-    return _socket;
+  this.getChild = function(){
+    return _child;
   }
   this.getInUse = function(){
     return _inUse;
@@ -124,7 +163,7 @@ function Worker(socket, id){
     return _id;
   }
   this.kill = function(){
-    _socket.emit("kill");
+    _child.kill('SIGHUP');
   }
 }
 
@@ -209,6 +248,7 @@ function WorkerDispatcher(id){
   }
   this.addNewWorker = function(worker){
     //todo: add validation of worker
+    console.warn((new Date())/1000)
     return _addWorkerTo(worker, _idle);
   }
   this.removeDeadWorker = function(worker){
@@ -233,8 +273,10 @@ function WorkerDispatcher(id){
   this.killIdleWorker = function(){
     if(_localCP <= MIN_WORKER) return;
     var ids=Object.keys(_idle);
+    var biz=Object.keys(_busy);
     if(ids.length>0){
       console.log("host " + port + " idel: ", ids.length);
+      console.log("host " + port + " busy: ", biz.length);
       var id = ids[0];
       var worker = _getWorkerFrom(id, _idle);
       worker.kill();
@@ -248,14 +290,16 @@ function WorkerDispatcher(id){
     if(_localCP < MAX_WORKER && _localCP < taskManager.length){
       //console.log(_localCP, MAX_WORKER);
       //cp.exec('node ' + __dirname + '/' + WORKER_FILE_NAME);
-      cp.fork(WORKER_FILE_NAME, [port]);
+      var child = cp.fork(WORKER_FILE_NAME, [port]);
+      var worker = new Worker(child, child.pid);
       _localCP++;
     }
   }
   this.initWorker = function(){
     while(_localCP < MIN_WORKER){
       //console.log(_localCP, MIN_WORKER);
-      cp.fork(WORKER_FILE_NAME, [port]);
+      var child = cp.fork(WORKER_FILE_NAME, [port]);
+      var worker = new Worker(child, child.pid);
       _localCP++;
     }
   }
