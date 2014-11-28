@@ -63,9 +63,18 @@ function Cooperator(socket, maxWorker){
 		var id = data.id;
 		var res = _taskList[id].getRes();
 		var html = data.html.toString();
-		res.writeHead(200, {'Content-Type': 'text/html','Access-Control-Allow-Origin':'*'});
+		// res.writeHead(200, {'Content-Type': 'text/html','Access-Control-Allow-Origin':'*'});
 		res.end(html);
 		_taskNum -- ;
+		//console.log(_taskNum);
+	})
+	_socket.on('write',function(data){
+		//console.log(data.id);
+		var id = data.id;
+		var res = _taskList[id].getRes();
+		var html = data.content.toString();
+		// res.writeHead(200, {'Content-Type': 'text/html','Access-Control-Allow-Origin':'*'});
+		res.write(html);
 		//console.log(_taskNum);
 	})
 	this.getID = function(){
@@ -103,14 +112,15 @@ function CooperatorManager(ioServer){
 	var _desNum = 0;
 	var _lastMaxWorker = 0;
 	var _this = this;
-	// setInterval(function(){
-	// 	if( _waiting > 0 ) return;
-	// 	if( _maxWorker < _desNum){
-	// 		_this._generateCooperator();
-	// 	}else if( _maxWorker - _lastMaxWorker >= _desNum && _list.length > 1){
-	// 		_this._killLastCooperator();
-	// 	}
-	// },1000);
+	setInterval(function(){
+		if( _waiting > 0 ) return;
+		if( _maxWorker < _desNum){
+			_this._generateCooperator();
+		}
+		/*else if( _maxWorker - _lastMaxWorker >= _desNum && _list.length > 1){
+			_this._killLastCooperator();
+		}*/
+	},1000);
 
 	//assign event callback
 	/*================= 
@@ -168,15 +178,15 @@ function CooperatorManager(ioServer){
 	}
 	this._generateCooperator = function(cb){
 		var file = 'socket-test-cooperator.js';
-		var arg = ' 4 100';
-		//var child = cp.fork(file ,[4,100]);
-		var child = cp.exec('node '+ file + arg);
-		child.stdout.on('data', function (data) {
-		  console.log('C:' + data);
-		});
-		child.stderr.on('data', function (data) {
-		  console.log('C err:' + data);
-		});
+		var arg = ' 4 1000';
+		var child = cp.fork(file ,[4,1000]);
+		// var child = cp.exec('node '+ file + arg);
+		// child.stdout.on('data', function (data) {
+		//   console.log('C:' + data);
+		// });
+		// child.stderr.on('data', function (data) {
+		//   console.log('C err:' + data);
+		// });
 		_waiting ++ ;
 	}
 	this._getTop = function(){

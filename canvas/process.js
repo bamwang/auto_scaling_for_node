@@ -5,20 +5,79 @@ var fs = require('fs');
 var face_detect = require('face-detect')
 var Caman = require('caman').Caman;
 var app = express();
-var cryptojs = require( 'cryptojs' );
+var CryptoJS = require( 'crypto-js' );
+var zlib = require('zlib');
 
 var key = 'fasdf83njJIOjnkhoi3HFDIOu3hjfjIOOijioj3';
+CryptoJS.enc.u8array = {
+    /**
+     * Converts a word array to a Uint8Array.
+     *
+     * @param {WordArray} wordArray The word array.
+     *
+     * @return {Uint8Array} The Uint8Array.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var u8arr = CryptoJS.enc.u8array.stringify(wordArray);
+     */
+    stringify: function (wordArray) {
+        // Shortcuts
+        var words = wordArray.words;
+        var sigBytes = wordArray.sigBytes;
 
+        // Convert
+        var u8 = new Uint8Array(sigBytes);
+        for (var i = 0; i < sigBytes; i++) {
+            var byte = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+            u8[i]=byte;
+        }
+
+        return u8;
+    },
+
+    /**
+     * Converts a Uint8Array to a word array.
+     *
+     * @param {string} u8Str The Uint8Array.
+     *
+     * @return {WordArray} The word array.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var wordArray = CryptoJS.enc.u8array.parse(u8arr);
+     */
+    parse: function (u8arr) {
+        // Shortcut
+        var len = u8arr.length;
+
+        // Convert
+        var words = [];
+        for (var i = 0; i < len; i++) {
+            words[i >>> 2] |= (u8arr[i] & 0xff) << (24 - (i % 4) * 8);
+        }
+
+        return CryptoJS.lib.WordArray.create(words, len);
+    }
+};
 function process(req, res){
   var startTime = new Date();
   var filename = req.path.replace('.jpg','');
-  console.warn(filename);
-  res.writeHead(200, {'Content-Type': 'text/html'});
+  // console.warn(filename);
+  // res.writeHead(200, {'Content-Type': 'text/plain'});
+  res.write(filename+'\t');
   var img = new Image();
   var logo = new Image();
   try{
     img.src = fs.readFileSync('./input'+filename + '.jpg' );
     logo.src = fs.readFileSync('./logo.png');
+    var time = new Date() - startTime;
+    res.write('load:'+(time/1000)+'\t');
+    
     var imgRatio = img.height / img.width;
     var imgDrawWidth = 600;
     var imgDrawHeight = Math.round(imgDrawWidth * imgRatio);
@@ -43,6 +102,8 @@ function process(req, res){
     ctx.drawImage(logo, (imgDrawWidth-logoDrawWidth)/2, (imgDrawHeight-logoDrawHeight)/2, logoDrawWidth, logoRatio * logo.width);
     ctx.restore();
     ctx.save();
+    var time = new Date() - startTime;
+    res.write('watermark:'+(time/1000)+'\t');
 
     var canvasForFaceDetetivision = new Canvas( img.width, img.height );
     var ctx4fd = canvasForFaceDetetivision.getContext('2d');
@@ -50,6 +111,8 @@ function process(req, res){
     var result = face_detect.detect_objects({ "canvas" : canvasForFaceDetetivision,
     "interval" : 5,
     "min_neighbors" : 1 });
+    var time = new Date() - startTime;
+    res.write('recognition:'+(time/1000)+'\t');
     console.log('Found ' + result.length  + ' faces.');
     result.map(function(face, index){
       var adjustRate = 2;
@@ -60,6 +123,8 @@ function process(req, res){
       // ctx.strokeRect(face.x-face.width*adjustRate/2, face.y-face.height*adjustRate/2, face.width * ( 1 + adjustRate ),face.height * ( 1 + adjustRate ));
       ctx4ef.drawImage(img, (-face.x+face.width*adjustRate/2)*resizeRate, (-face.y+face.height*adjustRate/2)*resizeRate, img.width*resizeRate, img.height*resizeRate );
       console.log(face);
+      ctx4ef = null;
+      ctx4fd = null;
       // res.write('<img src="' + canvasForEachFace.toDataURL() + '" />');
       // Caman(canvasForEachFace.toBuffer(), function () {
       //   // this.crop(200, 200 ,0 , 0);
@@ -72,15 +137,44 @@ function process(req, res){
           // this.save("./output/face"+filename+'_'+ index+ ".png");
       //   // });
       // });
-    })
+    });
+    var binary = canvas.toBuffer();
+    var u8a = new Uint8Array( binary );
+    // console.log(u8a)
+    var srcWords = CryptoJS.enc.u8array.parse(u8a);
+    var encrypted = CryptoJS.AES.encrypt( srcWords, key );
+    var obj = {};
+    obj.iv = encrypted.iv.toString();
+    obj.s = encrypted.salt.toString();
+    obj.ct = encrypted.ciphertext.toString(CryptoJS.enc.Base64);
+    var src = JSON.stringify(obj);
     var time = new Date() - startTime;
-    res.write('recognition:'+(time/1000)+'s<br>');
+    res.write('encrypt:'+(time/1000)+'\t');
+    canvas = null;
+    /*
     var base64 = canvas.toDataURL();
-    var encryptedData = cryptojs.Crypto.AES.encrypt( base64, key );
-    // res.write('encrypt:'+ encryptedData +'<br>');
+    var encryptedData = cryptojs.Crypto.DES.encrypt( base64 , key );
+    // res.write('encrypt:'+ encryptedData +'\t');
     var time = new Date() - startTime;
-    res.write('encrypt:'+(time/1000)+'s<br>');
+    res.write('encrypt:'+(time/1000)+'\t');
+    */
 
+
+    zlib.deflate(src, function(err, buffer) {
+      // console.log(err)
+      if (!err) {
+        var time = new Date() - startTime;
+        res.write('compress:'+(time/1000)+'\t');
+
+        // fs.writeFileSync('./test.dat', buffer);
+        // var time = new Date() - startTime;
+        // res.write('writeFileSync:'+(time/1000)+'\t');
+
+        var time = new Date() - startTime;
+        res.end('end:'+(time/1000)+'\t');
+      }
+    });
+    // fs.writeFileSync('./test.png', binary);
     // Caman(canvas.toBuffer(), function () {
     //   // this.crop(200, 200 ,0 , 0);
     //   // this.brightness(10);
@@ -96,9 +190,8 @@ function process(req, res){
     // });
 
     // res.write('<img src="' + base64 + '" />');
-    var time = new Date() - startTime;
-    res.write('toURL:'+(time/1000)+'s');
-    res.end();
+    // var time = new Date() - startTime;
+    // res.write('toURL:'+(time/1000)+'s');
 
   }catch(e){
     res.end(e.toString());

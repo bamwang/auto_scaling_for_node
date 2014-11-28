@@ -5,7 +5,7 @@ var cp = require('child_process');
 var WORKER_FILE_NAME = 'socket-test-worker.js';
 var numCPUs = require('os').cpus().length;
 
-var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : 92;
+var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
 var MAX_WORKER = parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
 console.log(port, process.argv[2], process.argv[3]);
 console.log(port, MIN_WORKER ,MAX_WORKER);
@@ -76,7 +76,7 @@ setInterval(function(){
 
  setInterval(function(){
   wd.killIdleWorker();
-  console.log("host "+ port +": check idle workers. num of workers is ",wd.getLocalCPNUM());
+  console.warn("host "+ port +": check idle workers. num of workers is ",wd.getLocalCPNUM());
  },60000);
 
 
@@ -117,16 +117,19 @@ function Worker(child, id){
       case 'res':
         _onRes(message);
       break;
+      case 'write':
+        _onWrite(message);
+      break;
       // case 'killed':
       //   _onKilled(message.data);
       // break;
       default:
-        console.log('undefined message type');
+        console.warn('undefined message type');
       break;
     }
   })
   var _onReady = function(){
-    console.log('child ready:'+ _id);
+    console.warn('child ready:'+ _id);
     wd.addNewWorker(self);
   }
 
@@ -135,6 +138,11 @@ function Worker(child, id){
     mySocket.emit('res', message.data);
     wd.returnIdleWorker(self);
   }
+  var _onWrite = function(message){
+    console.log(_id+' on write: ' +message.data.content);
+    mySocket.emit('write', message.data);
+  }
+
   // var _onKilled = function(){
   //   console.log('on killed');
   //   wd.removeDeadWorker(_id);
@@ -248,7 +256,7 @@ function WorkerDispatcher(id){
   }
   this.addNewWorker = function(worker){
     //todo: add validation of worker
-    console.warn((new Date())/1000)
+    console.log((new Date())/1000)
     return _addWorkerTo(worker, _idle);
   }
   this.removeDeadWorker = function(worker){
@@ -275,8 +283,8 @@ function WorkerDispatcher(id){
     var ids=Object.keys(_idle);
     var biz=Object.keys(_busy);
     if(ids.length>0){
-      console.log("host " + port + " idel: ", ids.length);
-      console.log("host " + port + " busy: ", biz.length);
+      console.warn("host " + port + " idel: ", ids.length);
+      console.warn("host " + port + " busy: ", biz.length);
       var id = ids[0];
       var worker = _getWorkerFrom(id, _idle);
       worker.kill();

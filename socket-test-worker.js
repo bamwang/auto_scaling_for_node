@@ -7,19 +7,21 @@ var processFunc = require('./canvas/process')
 
 
 function Res(message, data){
-  var _resBody = '';
+  // var _resBody = '';
   this.write = function(str){
-    _resBody += str;
+    message.data.content = str;
+    message.type = 'write';
+    process.send(message);
   }
   this.writeHead = function(str){
 
   }
   this.end = function(str){
     var str = str || '';
-    _resBody += str;
-    message.data.html = _resBody;
+    message.data.html = str;
     message.type = 'res';
     process.send(message);
+    console.log('called end');
   }
 }
 function Req(data){
