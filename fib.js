@@ -16,6 +16,6 @@ module.exports = function(req, res) {
 		var startTime = (new Date())/1000;
 	    var number=fib(n);
 	    var time = (new Date())/1000 - startTime;
-	    res.end(''+time);
+	    res.end(time+'\t');
 	}
 }
