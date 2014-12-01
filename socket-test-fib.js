@@ -112,17 +112,15 @@ function CooperatorManager(ioServer){
 	var _desNum = 0;
 	var _lastMaxWorker = 0;
 	var _this = this;
-	/*in this test we void it
 	setInterval(function(){
 		if( _waiting > 0 ) return;
 		if( _maxWorker < _desNum){
 			_this._generateCooperator();
 		}
-		else if( _maxWorker - _lastMaxWorker >= _desNum && _list.length > 1){
+		/*else if( _maxWorker - _lastMaxWorker >= _desNum && _list.length > 1){
 			_this._killLastCooperator();
-		}
+		}*/
 	},1000);
-	*/
 
 	//assign event callback
 	/*================= 
@@ -134,7 +132,7 @@ function CooperatorManager(ioServer){
 	==================*/
 		socket.on('ready', function (data) {
 			var maxWorker = data.maxWorker;
-			console.log( "master get maxWorker: ",maxWorker );
+			//console.log( maxWorker );
 			console.log("master  : cooperator " , socket.id ,"added.");
 			var cooperator = new Cooperator(socket, maxWorker);
 			_this._addCooperator(cooperator);
