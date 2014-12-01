@@ -234,7 +234,9 @@ function WorkerDispatcher(id){
       return list[id];
     else return -1;
   }
-
+  var _getIdleWorkerLength = function(){
+    return Object.keys(_idle).length;
+  }
 
   //public
   this.getIdleWorker = function(){
@@ -295,7 +297,7 @@ function WorkerDispatcher(id){
   }
   this.generateWorker = function(taskManager){
     //console.log(_localCP, taskManager.length);
-    if(_localCP < MAX_WORKER && _localCP < taskManager.length){
+    if(_localCP < MAX_WORKER && _getIdleWorkerLength() < taskManager.length){
       //console.log(_localCP, MAX_WORKER);
       //cp.exec('node ' + __dirname + '/' + WORKER_FILE_NAME);
       var child = cp.fork(WORKER_FILE_NAME, [port]);
