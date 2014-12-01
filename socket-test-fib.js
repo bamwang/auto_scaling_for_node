@@ -121,8 +121,8 @@ function CooperatorManager(ioServer){
 		else if( _maxWorker - _lastMaxWorker >= _desNum && _list.length > 1){
 			_this._killLastCooperator();
 		}
-	*/
 	},1000);
+	*/
 
 	//assign event callback
 	/*================= 
