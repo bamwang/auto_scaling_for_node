@@ -9,6 +9,7 @@ function fib(n) {
 module.exports = function(req, res) {
 	var m = req.path.replace('/','');
 	var n = parseInt(m);
+	res.write(' ');
 	if( isNaN(n) )
 		res.end();
 	else{
