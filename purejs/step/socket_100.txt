@@ -1,0 +1,84 @@
+/shangwu_gongzuo_chuchai-028	load:0.005	watermark:0.008	recognition:13.453	encrypt:22.777	compress:23.123	writeFileSync:23.133	end:23.138	40.118
+/cannes_international_film_festival-010	load:0.186	watermark:0.19	recognition:24.897	encrypt:30.532	compress:30.707	writeFileSync:30.715	end:30.715	45.032
+/shangwu_gongzuo_chuchai-013	load:0.121	watermark:0.266	recognition:17.386	encrypt:24.475	compress:25.018	writeFileSync:25.026	end:25.026	45.695
+/shangwu_gongzuo_chuchai-008	load:0.131	watermark:0.233	recognition:19.701	encrypt:27.522	compress:28.185	writeFileSync:28.19	end:28.19	45.827
+/bailing_gongzuo_jiaotan-022	load:0.087	watermark:0.155	recognition:20.129	encrypt:29.995	compress:30.218	writeFileSync:30.672	end:30.672	45.735
+/shangwu_gongzuo_chuchai-005	load:0.171	watermark:0.242	recognition:25.554	encrypt:28.862	compress:29.949	writeFileSync:29.951	end:29.951	46.864
+/bailing_gongzuo_jiaotan-014	load:0.183	watermark:0.186	recognition:27.333	encrypt:31.939	compress:32.126	writeFileSync:33.055	end:33.055	47.033
+/xiaoyuan_shenghuo-004	load:0.123	watermark:0.242	recognition:20.078	encrypt:23.566	compress:24.587	writeFileSync:24.604	end:24.604	46.994
+/bailing_gongzuo_jiaotan-011	load:0.205	watermark:0.208	recognition:27.429	encrypt:31.535	compress:32.642	writeFileSync:32.643	end:32.643	47.084
+/bailing_gongzuo_jiaotan-003	load:0.18	watermark:0.184	recognition:28.524	encrypt:32.715	compress:33.236	writeFileSync:33.237	end:33.237	47.098
+/shangwu_gongzuo_chuchai-001	load:0.188	watermark:0.191	recognition:25.234	encrypt:30.954	compress:31.142	writeFileSync:31.287	end:33.32	49.683
+/shangwu_gongzuo_chuchai-012	load:0.096	watermark:0.189	recognition:20.328	encrypt:30.404	compress:30.663	writeFileSync:30.731	end:30.732	49.592
+/cannes_international_film_festival-012	load:0.093	watermark:0.19	recognition:23.948	encrypt:32.641	compress:32.878	writeFileSync:32.996	end:32.996	49.343
+/shangwu_gongzuo_chuchai-010	load:0.109	watermark:0.227	recognition:19.831	encrypt:28.732	compress:29.804	writeFileSync:29.81	end:29.81	47.065
+/shangwu_gongzuo_chuchai-017	load:0.11	watermark:0.116	recognition:20.098	encrypt:27.111	compress:27.355	writeFileSync:27.491	end:29.532	49.829
+/shangwu_gongzuo_chuchai-011	load:0.078	watermark:0.222	recognition:17.232	encrypt:23.152	compress:25.861	writeFileSync:25.867	end:25.867	49.841
+/cannes_international_film_festival-006	load:0.124	watermark:0.128	recognition:27.09	encrypt:29.703	compress:32.443	writeFileSync:32.445	end:32.445	49.888
+/shangwu_gongzuo_chuchai-007	load:0.122	watermark:0.232	recognition:19.138	encrypt:28.496	compress:31.241	writeFileSync:31.243	end:31.243	49.898
+/shangwu_gongzuo_chuchai-026	load:0.18	watermark:0.294	recognition:19.933	encrypt:29.59	compress:30.39	writeFileSync:30.391	end:30.391	49.917
+/bailing_gongzuo_jiaotan-005	load:0.171	watermark:0.175	recognition:29.336	encrypt:36.189	compress:36.79	writeFileSync:36.8	end:36.8	49.988
+/shangwu_gongzuo_chuchai-021	load:0.107	watermark:0.112	recognition:21.261	encrypt:30.569	compress:30.725	writeFileSync:30.73	end:30.731	50.406
+/shangwu_gongzuo_chuchai-016	load:0.103	watermark:0.212	recognition:20.787	encrypt:31.585	compress:31.964	writeFileSync:31.968	end:31.968	50.665
+/bailing_gongzuo_jiaotan-018	load:0.142	watermark:0.271	recognition:17.492	encrypt:27.893	compress:28.146	writeFileSync:28.259	end:28.259	50.819
+/shangwu_gongzuo_chuchai-027	load:0.106	watermark:0.111	recognition:17.81	encrypt:28.531	compress:29.034	writeFileSync:29.037	end:29.037	50.514
+/shangwu_gongzuo_chuchai-029	load:0.1	watermark:0.105	recognition:22.624	encrypt:31.759	compress:32.185	writeFileSync:32.186	end:32.186	50.957
+/bailing_gongzuo_jiaotan	load:0.079	watermark:0.173	recognition:28.264	encrypt:33.094	compress:33.479	writeFileSync:33.48	end:33.48	50.951
+/cannes_international_film_festival-017	load:0.102	watermark:0.209	recognition:29.039	encrypt:37.251	compress:37.718	writeFileSync:37.719	end:37.719	51.021
+/bailing_gongzuo_jiaotan-004	load:0.128	watermark:0.209	recognition:29.285	encrypt:36.943	compress:37.44	writeFileSync:37.448	end:37.448	51.019
+/xiaoyuan_shenghuo-016	load:0.148	watermark:0.299	recognition:21.211	encrypt:25.053	compress:25.214	writeFileSync:25.523	end:25.528	51.157
+/shangwu_gongzuo_chuchai-015	load:0.078	watermark:0.083	recognition:18.11	encrypt:28.423	compress:28.804	writeFileSync:28.882	end:29.143	50.951
+/shangwu_gongzuo_chuchai-030	load:0.112	watermark:0.117	recognition:21.38	encrypt:30.447	compress:30.581	writeFileSync:30.621	end:30.621	51.965
+/shangwu_gongzuo_chuchai-031	load:0.072	watermark:0.21	recognition:19.476	encrypt:29.776	compress:31.289	writeFileSync:31.307	end:31.307	52.166
+/xiaoyuan_shenghuo-016	load:0.01	watermark:0.169	recognition:24.407	encrypt:26.704	compress:26.886	writeFileSync:26.895	end:26.896	52.312
+/xiaoyuan_shenghuo-015	load:0.148	watermark:0.276	recognition:25.403	encrypt:27.086	compress:28.154	writeFileSync:28.156	end:28.156	52.224
+/bailing_gongzuo_jiaotan-001	load:0.138	watermark:0.142	recognition:30.922	encrypt:37.98	compress:38.258	writeFileSync:38.26	end:38.26	52.332
+/shangwu_gongzuo_chuchai-004	load:0.253	watermark:0.257	recognition:27.206	encrypt:32.924	compress:33.143	writeFileSync:33.144	end:33.144	52.423
+/bailing_gongzuo_jiaotan-006	load:0.241	watermark:0.245	recognition:31.727	encrypt:38.201	compress:38.453	writeFileSync:38.471	end:38.471	52.508
+/xiaoyuan_shenghuo-010	load:0.076	watermark:0.08	recognition:23.716	encrypt:25.757	compress:26.223	writeFileSync:26.224	end:26.224	53.420
+/shangwu_gongzuo_chuchai-006	load:0.231	watermark:0.234	recognition:26.535	encrypt:32.295	compress:32.371	writeFileSync:32.487	end:32.487	54.393
+/cannes_international_film_festival-018	load:0.099	watermark:0.102	recognition:30.971	encrypt:38.919	compress:39.055	writeFileSync:39.067	end:39.067	54.443
+/shangwu_gongzuo_chuchai-019	load:0.122	watermark:0.233	recognition:19.616	encrypt:29.295	compress:30.004	writeFileSync:30.005	end:30.005	54.401
+/shangwu_gongzuo_chuchai-025	load:0.2	watermark:0.336	recognition:17.227	encrypt:29.119	compress:30.027	writeFileSync:30.028	end:30.028	54.413
+/xiaoyuan_shenghuo-014	load:0.263	watermark:0.267	recognition:24.036	encrypt:27.143	compress:27.241	writeFileSync:27.242	end:27.242	54.391
+/bailing_gongzuo_jiaotan-020	load:0.124	watermark:0.258	recognition:21.87	encrypt:33.41	compress:33.956	writeFileSync:34.063	end:34.063	54.409
+/cannes_international_film_festival-008	load:0.221	watermark:0.341	recognition:28.625	encrypt:34.899	compress:34.984	writeFileSync:34.987	end:34.987	54.425
+/shangwu_gongzuo_chuchai-020	load:0.139	watermark:0.264	recognition:19.45	encrypt:30.812	compress:30.919	writeFileSync:31.049	end:31.049	54.391
+/cannes_international_film_festival-007	load:0.183	watermark:0.262	recognition:33.358	encrypt:36.39	compress:36.505	writeFileSync:36.506	end:36.506	54.423
+/xiaoyuan_shenghuo-013	load:0.124	watermark:0.282	recognition:23.44	encrypt:25.451	compress:26.008	writeFileSync:26.183	end:26.183	54.376
+/bailing_gongzuo_jiaotan-010	load:0.123	watermark:0.216	recognition:29.484	encrypt:33.05	compress:33.181	writeFileSync:33.351	end:33.351	54.410
+/cannes_international_film_festival-002	load:0.121	watermark:0.267	recognition:32.08	encrypt:35.8	compress:35.876	writeFileSync:35.891	end:35.891	54.627
+/shangwu_gongzuo_chuchai-032	load:0.147	watermark:0.297	recognition:21.066	encrypt:27.527	compress:27.856	writeFileSync:27.858	end:27.858	54.426
+/xiaoyuan_shenghuo-002	load:0.125	watermark:0.128	recognition:28.245	encrypt:31.77	compress:31.848	writeFileSync:31.849	end:31.849	54.434
+/bailing_gongzuo_jiaotan-008	load:0.217	watermark:0.221	recognition:31.799	encrypt:38.483	compress:38.609	writeFileSync:38.61	end:38.61	54.484
+/shangwu_gongzuo_chuchai-034	load:0.14	watermark:0.145	recognition:19.862	encrypt:30.135	compress:30.663	writeFileSync:30.698	end:30.698	55.323
+/bailing_gongzuo_jiaotan-007	load:0.209	watermark:0.212	recognition:34.644	encrypt:37.741	compress:37.91	writeFileSync:38.523	end:38.523	55.346
+/xiaoyuan_shenghuo-007	load:0.163	watermark:0.298	recognition:27.911	encrypt:29.737	compress:29.791	writeFileSync:29.794	end:29.794	55.302
+/cannes_international_film_festival-013	load:0.278	watermark:0.282	recognition:35.332	encrypt:37.178	compress:37.239	writeFileSync:37.247	end:37.247	55.345
+/bailing_gongzuo_jiaotan-015	load:0.207	watermark:0.302	recognition:37.592	encrypt:41.447	compress:41.517	writeFileSync:41.53	end:41.53	55.385
+/shangwu_gongzuo_chuchai-022	load:0.137	watermark:0.29	recognition:23.614	encrypt:32.271	compress:32.385	writeFileSync:32.408	end:32.408	55.318
+/xiaoyuan_shenghuo-008	load:0.246	watermark:0.25	recognition:28.226	encrypt:29.053	compress:29.117	writeFileSync:29.118	end:29.118	55.362
+/shangwu_gongzuo_chuchai-024	load:0.142	watermark:0.248	recognition:24.816	encrypt:29.334	compress:29.437	writeFileSync:29.443	end:29.443	55.510
+/cannes_international_film_festival-019	load:0.13	watermark:0.294	recognition:30.688	encrypt:32.637	compress:32.721	writeFileSync:32.722	end:32.722	55.579
+/xiaoyuan_shenghuo-018	load:0.134	watermark:0.136	recognition:23.614	encrypt:29.972	compress:30.188	writeFileSync:30.191	end:30.191	56.448
+/bailing_gongzuo_jiaotan-012	load:0.009	watermark:0.191	recognition:36.405	encrypt:40.074	compress:40.402	writeFileSync:40.713	end:40.713	56.436
+/xiaoyuan_shenghuo	load:0.148	watermark:0.151	recognition:24.654	encrypt:31.183	compress:31.251	writeFileSync:31.254	end:31.255	56.995
+/xiaoyuan_shenghuo-011	load:0.155	watermark:0.156	recognition:25.158	encrypt:30.081	compress:30.133	writeFileSync:30.139	end:30.139	57.088
+/shangwu_gongzuo_chuchai-018	load:0.009	watermark:0.012	recognition:29.6	encrypt:36.876	compress:36.996	writeFileSync:36.998	end:36.999	57.111
+/cannes_international_film_festival-005	load:0.114	watermark:0.218	recognition:36.448	encrypt:41.555	compress:41.642	writeFileSync:41.646	end:41.646	57.158
+/xiaoyuan_shenghuo-018	load:0.012	watermark:0.014	recognition:25.794	encrypt:29.678	compress:29.738	writeFileSync:29.739	end:29.739	57.202
+/cannes_international_film_festival-004	load:0.009	watermark:0.025	recognition:35.544	encrypt:39.516	compress:39.582	writeFileSync:39.583	end:39.583	57.555
+/xiaoyuan_shenghuo-012	load:0.013	watermark:0.024	recognition:26.967	encrypt:30.052	compress:30.116	writeFileSync:30.117	end:30.117	57.548
+/bailing_gongzuo_jiaotan-019	load:0.007	watermark:0.109	recognition:26.018	encrypt:42.121	compress:42.295	writeFileSync:42.297	end:42.297	57.692
+/cannes_international_film_festival-011	load:0.012	watermark:0.1	recognition:32.734	encrypt:35.929	compress:36.017	writeFileSync:36.019	end:36.02	57.722
+/bailing_gongzuo_jiaotan-017	load:0.104	watermark:0.107	recognition:39.437	encrypt:41.806	compress:41.891	writeFileSync:41.893	end:41.893	57.791
+/bailing_gongzuo_jiaotan-016	load:0.179	watermark:0.181	recognition:41.99	encrypt:44.459	compress:44.568	writeFileSync:44.569	end:44.569	57.941
+/bailing_gongzuo_jiaotan-002	load:0.014	watermark:0.016	recognition:40.256	encrypt:42.425	compress:42.54	writeFileSync:42.542	end:42.542	58.038
+/cannes_international_film_festival-015	load:0.009	watermark:0.011	recognition:38.757	encrypt:40.309	compress:40.411	writeFileSync:40.412	end:40.413	59.820
+/shangwu_gongzuo_chuchai-014	load:0.126	watermark:0.129	recognition:18.946	encrypt:34.262	82.678
+/shangwu_gongzuo_chuchai-009	load:0.006	watermark:0.009	recognition:21.815	82.684
+/bailing_gongzuo_jiaotan-021	load:0.009	watermark:0.015	recognition:21.662	82.720
+/shangwu_gongzuo_chuchai-003	load:0.013	watermark:0.185	recognition:20.313	82.686
+/xiaoyuan_shenghuo-001	load:0.012	watermark:0.014	82.677
+/xiaoyuan_shenghuo-005	load:0.011	watermark:0.013	recognition:25.738	82.677
+/shangwu_gongzuo_chuchai-023	load:0.007	watermark:0.009	82.674
