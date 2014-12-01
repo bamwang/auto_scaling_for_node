@@ -65,19 +65,18 @@ CryptoJS.enc.u8array = {
     }
 };
 function process(req, res){
-  res.write(' ');
   var startTime = new Date();
   var filename = req.path.replace('.jpg','');
   // console.warn(filename);
   // res.writeHead(200, {'Content-Type': 'text/plain'});
-  //res.write(filename+'\t');
+  res.write(filename+'\t');
   var img = new Image();
   var logo = new Image();
   try{
     img.src = fs.readFileSync('./input'+filename + '.jpg' );
     logo.src = fs.readFileSync('./logo.png');
     var time = new Date() - startTime;
-    //res.write('load:'+(time/1000)+'\t');
+    res.write('load:'+(time/1000)+'\t');
     
     var imgRatio = img.height / img.width;
     var imgDrawWidth = 600;
@@ -104,7 +103,7 @@ function process(req, res){
     ctx.restore();
     ctx.save();
     var time = new Date() - startTime;
-    //res.write('watermark:'+(time/1000)+'\t');
+    res.write('watermark:'+(time/1000)+'\t');
 
     var canvasForFaceDetetivision = new Canvas( img.width, img.height );
     var ctx4fd = canvasForFaceDetetivision.getContext('2d');
@@ -113,7 +112,7 @@ function process(req, res){
     "interval" : 5,
     "min_neighbors" : 1 });
     var time = new Date() - startTime;
-    //res.write('recognition:'+(time/1000)+'\t');
+    res.write('recognition:'+(time/1000)+'\t');
     console.log('Found ' + result.length  + ' faces.');
     result.map(function(face, index){
       var adjustRate = 2;
@@ -124,7 +123,7 @@ function process(req, res){
       // ctx.strokeRect(face.x-face.width*adjustRate/2, face.y-face.height*adjustRate/2, face.width * ( 1 + adjustRate ),face.height * ( 1 + adjustRate ));
       ctx4ef.drawImage(img, (-face.x+face.width*adjustRate/2)*resizeRate, (-face.y+face.height*adjustRate/2)*resizeRate, img.width*resizeRate, img.height*resizeRate );
       console.log(face);
-      // //res.write('<img src="' + canvasForEachFace.toDataURL() + '" />');
+      // res.write('<img src="' + canvasForEachFace.toDataURL() + '" />');
       // Caman(canvasForEachFace.toBuffer(), function () {
       //   // this.crop(200, 200 ,0 , 0);
       //   // this.brightness(10);
@@ -148,7 +147,7 @@ function process(req, res){
     obj.ct = encrypted.ciphertext.toString(CryptoJS.enc.Base64);
     var src = JSON.stringify(obj);
     var time = new Date() - startTime;
-    //res.write('encrypt:'+(time/1000)+'\t');
+    res.write('encrypt:'+(time/1000)+'\t');
     canvas = null;
     ctx=null;
     canvasForEachFace = null;
@@ -158,9 +157,9 @@ function process(req, res){
     /*
     var base64 = canvas.toDataURL();
     var encryptedData = cryptojs.Crypto.DES.encrypt( base64 , key );
-    // //res.write('encrypt:'+ encryptedData +'\t');
+    // res.write('encrypt:'+ encryptedData +'\t');
     var time = new Date() - startTime;
-    //res.write('encrypt:'+(time/1000)+'\t');
+    res.write('encrypt:'+(time/1000)+'\t');
     */
 
 
@@ -168,13 +167,13 @@ function process(req, res){
       // console.log(err)
       if (!err) {
         var time = new Date() - startTime;
-        //res.write('compress:'+(time/1000)+'\t');
+        res.write('compress:'+(time/1000)+'\t');
 
         fs.writeFileSync('./test.dat', buffer);
         var time = new Date() - startTime;
-        //res.write('writeFileSync:'+(time/1000)+'\t');
+        res.write('writeFileSync:'+(time/1000)+'\t');
         var time = new Date() - startTime;
-        res.end(time/1000 + '\t');
+        res.end('end:'+(time/1000)+'\t');
       }
     });
 
@@ -190,13 +189,13 @@ function process(req, res){
     //     // console.log(d)
     //     this.save("./output"+filename+".png");
     //         var time = new Date() - startTime;
-    // //res.write((time/1000)+'s');
+    // res.write((time/1000)+'s');
     //   // });
     // });
 
-    // //res.write('<img src="' + base64 + '" />');
+    // res.write('<img src="' + base64 + '" />');
     // var time = new Date() - startTime;
-    // //res.write('toURL:'+(time/1000)+'s');
+    // res.write('toURL:'+(time/1000)+'s');
 
   }catch(e){
     res.end(e.toString());

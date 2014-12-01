@@ -1,5 +1,5 @@
-touch purejs/step/${2}
-sh _list.txt ${1} > /dev/null
-usleep 500
-sh _list.txt ${1} > purejs/step/${2} &
-tail -f purejs/step/${2}
+touch ${2}
+sh listing.sh ${3} ${1} > /dev/null &
+usleep 200
+sh listing.sh ${4} ${1} > purejs/step/${2} &
+tail -F purejs/step/${2}
