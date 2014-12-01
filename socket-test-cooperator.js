@@ -5,8 +5,8 @@ var cp = require('child_process');
 var WORKER_FILE_NAME = 'socket-test-worker.js';
 var numCPUs = require('os').cpus().length;
 
-var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
-var MAX_WORKER = 100;//parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
+var MIN_WORKER = 100; //parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
+var MAX_WORKER = 1000; //parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
 console.log(port, process.argv[2], process.argv[3]);
 console.log(port, MIN_WORKER ,MAX_WORKER);
 var i = 0;
