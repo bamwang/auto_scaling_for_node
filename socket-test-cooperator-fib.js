@@ -72,7 +72,7 @@ setInterval(function(){
     proc(reqManager);
   }
 
-},0)
+},70)
 
  setInterval(function(){
   wd.killIdleWorker();
