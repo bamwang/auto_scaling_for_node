@@ -1,0 +1,27 @@
+According to the preparation test, we designed test relate to real task of processing 200 pictures. We use Cluster third module expressjs and our system to implemented a web server, after the web server receive a request, server will process a task described below:
+1. Base on the http request string, read picture file from local file system.
+2. Resize the width of picture to 600px with origin aspect ratio aspect, and add watermark to the picture.
+3. Recognize faces in the picture with pure javascript implemented library face-detect and crop parts of faces with size of 64px x 64px.
+4. Encrypt the resized picture with AES and get text base result.
+5. Compress the result of the last step.
+6. Write compressed data into a file.
+After each step is finished, program will send a response content of processing time.
+
+In this task we used several third-part and native modules. In the second and third step, we use a cairo backed canvas implementation for NodeJS node-cavans, so that we could do some simple picture processing with native javascript. In the forth step we used pure javascript encryption module called cropto-JS. In the fifth step native module zlib is used to make gzip compatible compression. In the first and last step we used a native module fs to operate local files.
+
+Before benchmark test, we run each task serially and record each processing time of each step. Refer to the Fig.# recognition took 65.7% of the processing time and encryption took 31.4%, others shared the rest 2.9%.
+
+Differ from the pre-test, since we sent different request strings to start each task, we use crul parallels to general request manually instead of using ab. And in this test, we recorded wait time, which is the time from request is send till the server start to response.
+
+Similar to the pre-test 2, 200 requests was sent concurrently, while each request is for processing each picture.
+The purpose of this test is to compare the performance between each method under the situation which recent method could handle properly.
+The result is shown in Table~\ref{??1}.
+Cluster is the result by using Cluster module to implement a process pool with 100 child processes. Proposal(init) is the result of proposal method on the initialized status. Proposal(continue) is the result of proposal method on the status when the pool size has been scaled out by send 100 requests ahead.
+According to the result, the mean of the proposal(init) is less than 1/3 of that of recent method and the maximum of proposal(init) is less than 1/4 of that of recent method. 
+Focus on the wait time, proposal method generated child processes properly based on the load of tasks. 
+Therefor each task did take much time to wait server to handle it. 
+Compared with proposal method, in the case of recent method, 100 requests has been handled by server immediately (within 1 second), while other 100 tasks waited for 68.9 seconds in average. 
+Similar to the pre test, because of the distribution method in Cluster, a lot of tasks is assigned to several child process. 
+Waiting queue appeared. To reduce the effect came from the defect of the distribution method in Cluster, we take 100 fastest records and analyzed them, see FigX. 
+Assume the other 101st ~ 200th were handled by server just after first 100 requests were finished and distributed averagely to 100 child processes, the mean and the maximum of the whole 200 requests would be about the twice of the first 100 requests. The estimated value is in the table X. The mean and maximum is much closer to that of the proposal method bus still longer.
+Compare with the estimated data of recent method, proposal(init) reduced 7.0% in maximum, and 15.8% in averagely, proposal(continue) reduced 17.5% in maximum, and 31.2% in averagely.

@@ -1,0 +1,86 @@
+The propose of this test is to check out how response time of ¥'late coming¥' requests of light task can be reduced with the proposal method when server is already in the full stress status.
+
+In this test, the task is to calculate the specific Fibonacci number. We use cluster module to create a HTTP server with 100 child processes in the child process pool as the recent solution. Server implemented with proposal method is consist with one Master and one Cooperator. In this case, to generate the similar condition, the initial number of Works of the proposal solution is set to 100. 
+
+The program to calculate Fibonacci number is shown in the figure X. And the environment is shown in the figure Y. In this test we only consider the local environment.
+
+This test is separate into 2 steps, in the first step 100 requests of calculating 40th Fibonacci number will be sent to the server concurrently to generate full stress status.
+In 5 seconds, it is the second step, 10 / 20 / 50 requests of calculating 35th Fibonacci number will be sent to the server concurrently.
+Response time and processing time and total time of the requests in the second step will be record.
+
+The result is 
+When the number of requests is 10 in the step 2,
+The average of wait time in recent solution is 14.89, processing time is 0.74 and total time is 15.63. While in the proposal solution, value is 1.89, 3.69 and 5.60. Thanks for the auto-scaling, child processes for late coming requests are generated as soon as possible, therefor CPU blocking is 最大限で avoid. Because late coming tasks are processed with early coming tasks at the same time, CPU resource for each task became less then recent on the tasks took more processing time.
+
+When the number of requests is 20 or 50 in the step 2,
+proposal solution even had a good performance. However the difference between two solution decrease while concurrent number increases. It is because that in the case of proposal solution, new child processes has been generated base on the number of late coming requests. The more new child processes it generates, the more CPU resource it will takes.
+
+Focus on the waiting time, it is around 15 second in the case of recent solution. This time is almost equal to the total time of processing 100 tasks of calculating 40th Fibonacci number in the step one with 5 seconds subtracted. It is easy to understand, in the recent solution, because all of the child processes is assigned to the tasks come in step 1. Requests come in the second step have to wait until some of these child processes become idle.
+However in the proposal solution, even all of the child processes are busy, Cooperator can generate new child processes to handle requests come in the step 2. And the waiting time is almost the time of generating a new process.
+
+0.74	14.89	15.63	mean	0.55	15.53	16.09	mean	0.89	15.64	16.53
+
+1.89	3.69	5.60	mean	1.89	4.52	6.42	mean	1.97	6.34	8.31
+
+
+
+
+
+
+
+In the preparation test we know the 有用性 of processing simple CPU bound task, we design a new test with processing much more generative tasks.
+We use Cluster third module expressjs and our system to implemented a web server, after the web server receive a request, server will process a task described below:
+1. Base on the http request string, read picture file from local file system.
+2. Resize the width of picture to 600px with origin aspect ratio aspect, and add watermark to the picture.
+3. Recognize faces in the picture with pure javascript implemented library face-detect and crop parts of faces with size of 64px x 64px.
+4. Encrypt the resized picture with AES and get text base result.
+5. Compress the result of the last step.
+6. Write compressed data into a file.
+After each step is finished, program will send a response content of processing time.
+
+In this task we used several third-part and native modules. In the second and third step, we use a cairo backed canvas implementation for NodeJS node-cavans, so that we could do some simple picture processing with native javascript. In the forth step we used pure javascript encryption module called cropto-JS. In the fifth step native module zlib is used to make gzip compatible compression. In the first and last step we used a native module fs to operate local files.
+
+Before benchmark test, we run each task serially and record each processing time of each step. Refer to the Fig.# recognition took 65.7% of the processing time and encryption took 31.4%, others shared the rest 2.9%.
+
+Similar to the reality test is separate into 2 step. In the first step, requests for each picture is sent to server concurrently, which means there are 100 requests are sent to server concurrently.
+In 5 seconds, it is the second step, 10 / 20 / 50 requests for first 10th / 20th / 50th pictures will be sent to the server concurrently.
+Response time and processing time and total time of the requests in the second step will be record.
+
+When the number of requests is 10 in the step 2,
+The average of wait time in recent solution is 20.04, processing time is 3.93 and total time is 23.97. While in the proposal solution, value is 6.88, 10.28 and 17.16. 
+
+When the number of requests is 20 or 50 in the step 2,
+proposal solution even had a good performance. Similar to the preparation test, the difference between two solution decrease while concurrent number increases due to the cost of generating new child processes.
+
+Unlike the request in the step 2 the 計算量 of tasks from step 2 are not light then that in the step 1, in the case of proposal solution, Server take much more to process task therefor it takes munch more time in processing, also in this test, task involved with I/O operation, the processing density in each task is less then that in the preparation test. In a result, the reduce rate of total time is less then the processing test. However the wait time still decreases significantly.
+
+As a result in the real problem test, proposal solution still has the 有用性
+
+The result is 
+
+3.93	20.04	23.97	mean	6.16	18.59	24.75	mean	14.08	13.33	27.42
+
+10.28	6.88	17.16	mean	11.83	7.56	19.40	mean	15.40	9.47	24.87
+
+
+
+
+
+
+
+
+
+Similar to the pre-test 2, 200 requests was sent concurrently, while each request is for processing each picture.
+The purpose of this test is to compare the performance between each method under the situation which recent method could handle properly.
+The result is shown in Table~\ref{??1}.
+Cluster is the result by using Cluster module to implement a process pool with 100 child processes. Proposal(init) is the result of proposal method on the initialized status. Proposal(continue) is the result of proposal method on the status when the pool size has been scaled out by send 100 requests ahead.
+According to the result, the mean of the proposal(init) is less than 1/3 of that of recent method and the maximum of proposal(init) is less than 1/4 of that of recent method. 
+Focus on the wait time, proposal method generated child processes properly based on the load of tasks. 
+Therefor each task did take much time to wait server to handle it. 
+Compared with proposal method, in the case of recent method, 100 requests has been handled by server immediately (within 1 second), while other 100 tasks waited for 68.9 seconds in average. 
+Similar to the pre test, because of the distribution method in Cluster, a lot of tasks is assigned to several child process. 
+Waiting queue appeared. To reduce the effect came from the defect of the distribution method in Cluster, we take 100 fastest records and analyzed them, see FigX. 
+Assume the other 101st ~ 200th were handled by server just after first 100 requests were finished and distributed averagely to 100 child processes, the mean and the maximum of the whole 200 requests would be about the twice of the first 100 requests. The estimated value is in the table X. The mean and maximum is much closer to that of the proposal method bus still longer.
+Compare with the estimated data of recent method, proposal(init) reduced 7.0% in maximum, and 15.8% in averagely, proposal(continue) reduced 17.5% in maximum, and 31.2% in averagely.
+
+ 
