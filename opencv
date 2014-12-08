@@ -1,0 +1,11 @@
+0-100
+              min  mean[+/-sd] median   max
+proposal init:        996 5501 2819.1   4805   17510
+proposal continue:       1349 4618 819.5   4653    6818
+cluster:        210 4444 10436.4   1694   44781
+
+200
+              min  mean[+/-sd] median   max
+cluster:        452 8219 11804.7   3945   42267
+proposal continue:       1025 8781 1776.5   9169   11896
+proposal init:        489 10480 3203.4   9680   20278

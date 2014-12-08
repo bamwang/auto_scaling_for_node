@@ -1,28 +1,43 @@
 var io = require('socket.io-client');
+var cryptojs = require( 'cryptojs' );
+console.log(process.argv);
+var PORT = parseInt(process.argv[2])
 
-function fib(n) {
-  if (n < 2) {
-    return 1;
-  } else {
-    return fib(n - 2) + fib(n - 1);
+var processFunc = require('./canvas/process')
+
+
+function Res(message, data){
+  // var _resBody = '';
+  this.write = function(str){
+    message.data.content = str;
+    message.type = 'write';
+    process.send(message);
   }
+  this.writeHead = function(str){
+
+  }
+  this.end = function(str){
+    var str = str || '';
+    message.data.html = str;
+    message.type = 'res';
+    process.send(message);
+    console.log('called end');
+  }
+}
+function Req(data){
+  this.path = data.req;
 }
 
 
-socket = io.connect('http://localhost:6501', {reconnect: true});
-  socket.on('who', function (data) {
-    console.log('worker:', data);
-    socket.emit('worker', { my: 'data' });
-  });
-  socket.on('req', function (data) {
-    //console.log('worker:',data)
-    var n = data.req.substr(1);
-    if(isNaN(n)) n = 1;
-    var result = fib(n);
-    //console.log(result);
-    socket.emit('res', { my: result });
-  });
-  socket.on('kill', function (data) {
-  	console.log("exited");
-  	process.exit(0);
-  });
+process.on('message', function(message) {
+  if(message.type == 'req'){
+    req = new Req(message.data);
+    res = new Res(message);
+    processFunc(req,res);
+  }
+  else if(message.type == 'kill'){
+    console.log("killed by message");
+    process.exit(0);
+  }
+});
+process.send({ type: 'ready' });

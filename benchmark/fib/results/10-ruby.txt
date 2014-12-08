@@ -1,0 +1,5 @@
+
+real	0m0.044s
+user	0m0.034s
+sys	0m0.008s
+ruby

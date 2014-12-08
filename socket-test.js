@@ -1,25 +1,22 @@
 var io = require('socket.io').listen(6501,{'log level': 1});
 var util = require('util');
+var cp = require('child_process');
 // var express = require('express');
 // var app = express();
 var http = require('http');
-var numCPUs = require('os').cpus().length;
+// var numCPUs = require('os').cpus().length;
 //http.createServer(3000);
 
-var addChild = false;
+// var addChild = false;
 
-var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
-var MAX_WORKER = parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
-console.warn(process.argv[2], process.argv[3]);
-console.warn(MIN_WORKER ,MAX_WORKER);
+// var MIN_WORKER = parseInt(process.argv[2])>numCPUs ? process.argv[2] : numCPUs;
+// var MAX_WORKER = parseInt(process.argv[3])>MIN_WORKER ? parseInt(process.argv[3]) : numCPUs;
+// console.warn(process.argv[2], process.argv[3]);
+// console.warn(MIN_WORKER ,MAX_WORKER);
 
-var WORKER_FILE_NAME = 'socket-test-worker.js';
 
-var cp = require('child_process');
-var i = 0
-for (; i < MIN_WORKER; i++) {
- 	cp.fork(__dirname + '/' + WORKER_FILE_NAME);
- }; 
+
+
 
 function Task(req, res, id){
 	var _req = req;
@@ -55,273 +52,211 @@ taskManager.get = function (){
 	return this.shift();
 }
 
-
-function Worker(socket, id){
-	var _id = socket.id||id;
-	var _inUse = false;
+function Cooperator(socket, maxWorker){
+	var _id = socket.id;
+	var _maxWorker = maxWorker;
 	var _socket = socket;
-	this.setSocket = function(socket){
-		if(typeof socket !== 'object'){
-			console.error(typeof socket);
-			return -1;
-		}			
-		_socket = socket;
-		return 0;
-	}
-	this.setInUse = function(status){
-		if(status!==true && status !== false)
-			return -1
-		_inUse = status;
-		return status;
-	}
-	this.getSocket = function(){
-		return _socket;
-	}
-	this.getInUse = function(){
-		return _inUse;
-	}
+	var _taskNum = 0;
+	var _taskList = {};
+	_socket.on('res',function(data){
+		//console.log(data.id);
+		var id = data.id;
+		var res = _taskList[id].getRes();
+		var html = data.html.toString();
+		// res.writeHead(200, {'Content-Type': 'text/html','Access-Control-Allow-Origin':'*'});
+		res.end(html);
+		_taskNum -- ;
+		//console.log(_taskNum);
+	})
+	_socket.on('write',function(data){
+		//console.log(data.id);
+		var id = data.id;
+		var res = _taskList[id].getRes();
+		var html = data.content.toString();
+		// res.writeHead(200, {'Content-Type': 'text/html','Access-Control-Allow-Origin':'*'});
+		res.write(html);
+		//console.log(_taskNum);
+	})
 	this.getID = function(){
 		return _id;
+	}
+	this.getMaxWorker = function(){
+		return _maxWorker;
 	}
 	this.kill = function(){
-		_socket.emit("kill");
+		_socket.emit('kill');
 	}
-}
-
-function WorkerDispatcher(id){
-
-	var IdleList =function(){};
-	var BusyList =function(){};
-	var _idle = new IdleList();
-	var _busy = new BusyList();
-	//private
-	this.checkArg = function(){}
-	var _addWorkerTo = function(worker, list){
-
-		//todo: move to checkArg
-		if(!worker.constructor || !worker.constructor.name==='Worker'){
-			console.error("Tried to add a "+worker.constructor.name);
-			return {
-				err : "worker",
-				type : worker.constructor.name
-			}
-		}
-		if(list!==_idle && list!==_busy){
-			console.error("Tried to add a "+worker.constructor.name);
-			return {
-				err : "list",
-				type : list.constructor.name
-			}
-		}
-		
-		var id = worker.getID();
-		list[id] = worker;
-		return [_idle,_busy];
-	}
-	var _removeWorkerFrom = function(worker, list){
-		//todo: move to checkArg
-		if(!worker.constructor || !worker.constructor.name==='Worker'){
-			console.error("Tried to add a "+worker.constructor.name);
-			return {
-				err : "worker",
-				type : worker.constructor.name
-			}
-		}
-		if(list!==_idle && list!==_busy){
-			console.error("Tried to add a "+worker.constructor.name);
-			return {
-				err : "list",
-				type : list.constructor.name
-			}
-		}
-		//
-		var id = worker.getID();
-		delete list[id];
-		return [_idle,_busy];
-	}
-	var _removeWorkerFromById = function(workerId, list){
-		var id = workerId;
-		delete list[id];
-		return [_idle,_busy];
-	}
-	var _getWorkerFrom = function(id, list){
-		if(list[id])
-			return list[id];
-		else return -1;
-	}
-	this.getIdleWorker = function(){
-		var ids=Object.keys(_idle);
-		if(ids.length>0){
-			var id = ids[0];
-			var worker = _getWorkerFrom(id, _idle);
-			_removeWorkerFrom(worker, _idle);
-			_addWorkerTo(worker, _busy);
-			return worker;
-		}
-		return undefined;
-	}
-	this.returnIdleWorker = function(worker){
-		//todo: add validation of worker
-		_removeWorkerFrom(worker, _busy);
-		_addWorkerTo(worker, _idle);
-		return [_idle,_busy];
-	}
-	this.addNewWorker = function(worker){
-		//todo: add validation of worker
-		return _addWorkerTo(worker, _idle);
-	}
-	this.removeDeadWorker = function(worker){
-		//todo: add validation of worker
-		if(typeof worker === "string"){
-			_removeWorkerFromById(worker, _idle);
-			_removeWorkerFromById(worker, _busy);
-		}else{
-			_removeWorkerFrom(worker, _idle);
-			_removeWorkerFrom(worker, _busy);
-		}
-	}
-	this.getList = function(){
-		return [_idle,_busy];
-	}
-	this.getAliveWorker = function(){
-		var idInIdle=Object.keys(_idle);
-		var idInBusy=Object.keys(_busy);
-		return idInBusy.length+idInIdle.length;
-	}
-	this.killIdleWorker = function(cb){
-		var ids=Object.keys(_idle);
-		if(ids.length>0){
-			console.log("idel: ", ids.length);
-			var id = ids[0];
-			var worker = _getWorkerFrom(id, _idle);
-			worker.kill();
-			this.removeDeadWorker(worker);
-			cb();
-			return [_idle,_busy];
-		}
-	}
-}
-
-function Cooperator(socket, id){
-	var _id = socket.id||id;
-	var _inUse = false;
-	var _socket = socket;
-	this.getID = function(){
-		return _id;
-	}
-}
-
-function cooperatorManager(){
-	var CooperatorList =function(){};
-	var _list = new CooperatorList();
-	this.addCooperator = function(cooperator){
-		var id = cooperator.getID();
-		list[id] = cooperator;
-		return [_list];
-	}
-	this.getCooperator = function(){
-
-	}
-}
-
-
-sList = {};
-var wd = new WorkerDispatcher();
-io.sockets.on('connection', function (socket) {
-	//console.warn(socket);
-	socket.emit('who', { hello: 'world' });
-	socket.on('worker', function (data) {
-		console.log("host  : " , socket.id ,"added.");
-		var worker = new Worker(socket);
-		//console.warn(worker.getID());
-		//sEle.setSocket(socket);
-		wd.addNewWorker(worker);
-		//console.log(wd.getList());
-	});
-	// http.get('/:n', function(req, res) {
-	// 	app.send(req.toSource());
-	// 	socket.emit('req', { req: req.url });
-	// 	res.send(util.inspect(req.url));
-	// });
-});
-
-io.sockets.on('disconnect', function (socket) {
-	//console.warn(socket);
-	var workerId = socket.id;
-	wd.removeDeadWorker(workerId);
-});
-
-setInterval(function(){
-	if(i>MIN_WORKER)
-		wd.killIdleWorker(function(){
-			i--;
+	this.sendTask = function( task ){
+		_taskNum ++ ;
+		//console.log(_taskNum);
+		var id = task.getID();
+		var req = task.getReq();
+		_taskList[id] = task;
+		_socket.emit('req', {
+			id : id,
+			req: req.url 
 		});
-	console.log("host: check idle workers. num of workers is ",i);
-},10000);
+	}
+	this.isFull = function(){
+		return _taskNum >= _maxWorker;
+	}
+}
 
+function CooperatorManager(ioServer){
+
+	var CooperatorList =function(){};
+	var _list = {};
+	var _idStack = [];
+	var _maxWorker = 0;
+	var _waiting = 0;
+	var _desNum = 0;
+	var _lastMaxWorker = 0;
+	var _this = this;
+	setInterval(function(){
+		if( _waiting > 0 ) return;
+		if( _maxWorker < _desNum){
+			_this._generateCooperator();
+		}
+		/*else if( _maxWorker - _lastMaxWorker >= _desNum && _list.length > 1){
+			_this._killLastCooperator();
+		}*/
+	},1000);
+
+	//assign event callback
+	/*================= 
+	when my worker connects
+	==================*/
+	ioServer.sockets.on('connection', function (socket) {
+	/*================= 
+	when my worker ready
+	==================*/
+		socket.on('ready', function (data) {
+			var maxWorker = data.maxWorker;
+			//console.log( maxWorker );
+			console.log("master  : cooperator " , socket.id ,"added.");
+			var cooperator = new Cooperator(socket, maxWorker);
+			_this._addCooperator(cooperator);
+		});
+		/*================= 
+		when my worker leaves
+		==================*/
+		socket.on('disconnect', function () {
+			var index = _idStack.indexOf(socket.id);
+			//console.log(index);
+			_idStack.splice(index, 1); 
+			//console.log(_idStack);
+
+			delete _list[socket.id];
+		});
+	});
+
+	ioServer.sockets
+	//private
+	this._addCooperator = function(cooperator){
+		//var id = cooperator.getID();
+		var maxWorker = cooperator.getMaxWorker();
+		var id = cooperator.getID();
+		_maxWorker += maxWorker;
+		_lastMaxWorker = maxWorker;
+		_list[id] = cooperator;
+		_idStack.push(id);
+		_waiting -- ;
+		//console.log(_idStack);
+		//console.log(_list);
+		// console.log(_maxWorker);
+		// console.log(_lastMaxWorker);
+		return _list;
+	}
+	this._killLastCooperator = function(){
+		
+		var id = _idStack.pop();
+		var cooperator = _list[id];
+		var maxWorker = cooperator.getMaxWorker();
+		cooperator.kill();
+		_maxWorker -= maxWorker;
+		_lastMaxWorker = _list[_list.length-1].getMaxWorker();
+	}
+	this._generateCooperator = function(cb){
+		var file = 'socket-test-cooperator.js';
+		var arg = ' 4 1000';
+		var child = cp.fork(file ,[4,1000]);
+		// var child = cp.exec('node '+ file + arg);
+		// child.stdout.on('data', function (data) {
+		//   console.log('C:' + data);
+		// });
+		// child.stderr.on('data', function (data) {
+		//   console.log('C err:' + data);
+		// });
+		_waiting ++ ;
+	}
+	this._getTop = function(){
+		return _list[0];
+	}
+	//public
+	this.setDesNum = function(num){
+		_desNum = num+1;
+		//console.log('des : ',_desNum)
+	}
+	this.sendTask = function(task){
+		//test
+		for(var i = 0; i < _idStack.length; i ++){
+			var cooperator = _list[_idStack[i]];
+			if( !cooperator.isFull() ){	
+				cooperator.sendTask(taskManager.shift());
+				//console.warn(i);
+				return true;
+			}
+		}
+		//if cooperators are not enough, run the first one
+		cm.setDesNum(taskManager.length);//set worker number
+		_list[_idStack[0]].sendTask(taskManager.shift());
+		return false;
+	}
+}
+
+var cm = new CooperatorManager(io);
+
+/*
+test block
+*/
+cm.setDesNum(1);
+function makeid(n)
+{
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for( var i=0; i < n+1 ; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    return text;
+}
 
 
 http.createServer(function (req, res) {
-	//res.writeHead(200, {'Content-Type': 'text/plain'});
-	//res.end('Hello World\n');
-	//console.log(req.url);
-	var task = new Task(req, res);
+
+	var task = new Task(req, res, makeid(10));
 	taskManager.add(task);
 	
 }).listen(1337, '127.0.0.1');
 
 
 setInterval(function(){
-	var task = taskManager.length > 0 ? taskManager.get() : undefined;
+	//cm.setDesNum(taskManager.length);//set worker number
+	var task = taskManager.length > 0 ? taskManager[0] : undefined;
 
 	if(task){
-		var req = task.getReq();
-		var res = task.getRes();
-		proc(req, res);
+		proc(taskManager);
 	}
 
 },0)
 
 
-
-function proc(req, res) {
+function proc(taskManager) {
+	var req = taskManager[0].getReq();
+	var res = taskManager[0].getRes();
 	if(req.url=='/debug' || req.url=='/favicon.ico' ){
-		res.writeHead(200, {'Content-Type': 'text/plain'});
-		res.end(util.inspect(wd.getList()));
+		res.writeHead(404);
+		res.end();
 	}else{
-		var worker=wd.getIdleWorker();
-		if(worker){
-			//addChild = false;
-			var socket=worker.getSocket();
-			socket.emit('req', { req: req.url });
-			socket.on('res', function (data) {
-				res.writeHead(200, {'Content-Type': 'text/plain'});
-				//console.log( data.my );
-				res.end(data.my.toString());
-				wd.returnIdleWorker(worker);
-			});
-		}else{
-			//addChild = true;
-			if(i<MAX_WORKER && i < taskManager.length){
-				cp.fork(__dirname + '/' + WORKER_FILE_NAME);
-				i++;
-				console.log("host: num of worker is ",i);
-			}
-			var a = setInterval(function(){
-				var worker=wd.getIdleWorker();
-				if(worker){
-					clearInterval(a);
-					var socket=worker.getSocket();
-					socket.emit('req', { req: req.url });
-					socket.on('res', function (data) {
-						res.writeHead(200, {'Content-Type': 'text/plain'});
-						//console.log( data.my );
-						res.end(data.my.toString());
-						wd.returnIdleWorker(worker);
-					});
-				}
-			},0);
-		}
+		cm.sendTask( taskManager );
 	}	
 }
 

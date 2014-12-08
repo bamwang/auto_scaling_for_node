@@ -1,17 +1,10 @@
 var cluster = require('cluster');
 var http = require('http');
-var numCPUs = require('os').cpus().length;
+var numCPUs = 100;//require('os').cpus().length;
 var util = require('util');
 var express = require('express');
 var app = express();
-
-function fib(n) {
-  if (n < 2) {
-    return 1;
-  } else {
-    return fib(n - 2) + fib(n - 1);
-  }
-}
+var processM = require('./canvas/process')
 
 
 
@@ -31,11 +24,6 @@ if (cluster.isMaster) {
   });
  
 } else {
-	app.get('/:n', function(req, res) {
-	    var number=fib(req.params.n);
-	    res.send(''+number);
-	});
-
-
+	app.get('/:n', processM);
 	app.listen(4000);
 }
