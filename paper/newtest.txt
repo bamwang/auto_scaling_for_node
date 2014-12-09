@@ -10,7 +10,7 @@ Response time and processing time and total time of the requests in the second s
 
 The result is 
 When the number of requests is 10 in the step 2,
-The average of wait time in recent solution is 14.89, processing time is 0.74 and total time is 15.63. While in the proposal solution, value is 1.89, 3.69 and 5.60. Thanks for the auto-scaling, child processes for late coming requests are generated as soon as possible, therefor CPU blocking is 最大限で avoid. Because late coming tasks are processed with early coming tasks at the same time, CPU resource for each task became less then recent on the tasks took more processing time.
+The average of wait time in recent solution is 14.89, processing time is 0.74 and total time is 15.63. While in the proposal solution, value is 1.89, 3.69 and 5.60. Thanks for the auto-scaling, child processes for late coming requests are generated as soon as possible, therefor CPU blocking is avoided at a maximum. Because late coming tasks are processed with early coming tasks at the same time, CPU resource for each task became less then recent on the tasks took more processing time.
 
 When the number of requests is 20 or 50 in the step 2,
 proposal solution even had a good performance. However the difference between two solution decrease while concurrent number increases. It is because that in the case of proposal solution, new child processes has been generated base on the number of late coming requests. The more new child processes it generates, the more CPU resource it will takes.
@@ -28,7 +28,7 @@ However in the proposal solution, even all of the child processes are busy, Coop
 
 
 
-In the preparation test we know the 有用性 of processing simple CPU bound task, we design a new test with processing much more generative tasks.
+The preparation test shows the utility of processing simple CPU bound task, we design a new test with processing much more generative tasks.
 We use Cluster third module expressjs and our system to implemented a web server, after the web server receive a request, server will process a task described below:
 1. Base on the http request string, read picture file from local file system.
 2. Resize the width of picture to 600px with origin aspect ratio aspect, and add watermark to the picture.
@@ -54,7 +54,7 @@ proposal solution even had a good performance. Similar to the preparation test, 
 
 Unlike the request in the step 2 the 計算量 of tasks from step 2 are not light then that in the step 1, in the case of proposal solution, Server take much more to process task therefor it takes munch more time in processing, also in this test, task involved with I/O operation, the processing density in each task is less then that in the preparation test. In a result, the reduce rate of total time is less then the processing test. However the wait time still decreases significantly.
 
-As a result in the real problem test, proposal solution still has the 有用性
+As a result in the real problem test, proposal solution still shows the utility.
 
 The result is 
 
