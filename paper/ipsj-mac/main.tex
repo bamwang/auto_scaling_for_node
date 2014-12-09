@@ -1,0 +1,544 @@
+%\documentclass[JIP,draft]{ipsj}
+\documentclass[JIP]{ipsj}
+
+\usepackage[dvips]{graphicx}
+\usepackage{latexsym}
+
+\def\Underline{\setbox0\hbox\bgroup\let\\\endUnderline}
+\def\endUnderline{\vphantom{y}\egroup\smash{\underline{\box0}}\\}
+\def\|{\verb|}
+
+\setcounter{volume}{20}% vol20=2012
+\setcounter{number}{4}% 1, 2, 3, 4
+\setcounter{page}{1}
+
+\received{2011}{7}{1}
+%\rereceived{2011}{10}{1}   % optional
+%\rerereceived{2011}{10}{31} % optional
+\accepted{2011}{11}{5}
+
+\usepackage[varg]{txfonts}%%!!
+\makeatletter%
+\input{ot1txtt.fd}
+\makeatother%
+
+\begin{document}
+
+\title{How to Prepare Your Papers for the JIP}
+
+\affiliate{IPSJ}{Information Processing Society of Japan, 
+Chiyoda, Tokyo 101--0062, Japan}
+\affiliate{JU}{Johoshori University, Chiyoda, Tokyo 101--0062, Japan}
+\paffiliate{PJU}{Johoshori University}
+
+\author{Joho Taro}{IPSJ,PJU}[joho.taro@ipsj.or.jp]
+\author{Shori Hanako}{JU}[shori.hanako@johosyori-u.ac.jp]
+\author{Gakkai Jiro}{JU}
+
+\begin{abstract}
+Nowadays, Node.js becomes more and more popular in developing web application, because some features that makes it lightweight and efficient, perfect for data-intensive real-time applications.
+However, Node.js is implemented with single thread architecture, thus the calculating from different tasks cannot be served in parallel.
+Especially in serving CPU-bound tasks, as CPU blocking happens, the responsiveness deteriorates significantly.
+To solve this problem, writing non-blocking code, generating a child process pool to scale out statically or reimplementing the Node.js with multi-thread architecture are general solutions.
+However, nowadays still have the defect that when the number of tasks increases, part of tasks will still be blocked.
+This paper suggests a new solution with auto scaling-out mechanism. And we tested it with a real problem and proved the utility.
+%tools which are used to implement the Node.js with multi-thread architecture are still unstable or with limited functions. To generate a child process pool in fixed size still does not solve the problem when the number of tasks increases. This paper suggests a new solution with auto scaling-out mechanism. And we have 3 evaluating tests that show our solution has a better performance.
+\end{abstract}
+
+\begin{keyword}
+Journal of Information Processing, \LaTeX, style files, ``Dos and
+ Don'ts'' list
+\end{keyword}
+
+\maketitle
+
+\section{Introduction}
+Nowadays, Node.js becomes more and more popular in developing web application, because of its unblocking I/O, and event-driven architecture, it is perfect for data-intensive real-time applications.
+However, the main part of Node.js is implemented with single thread architecture, thus the process needing CPU resource cannot be served in parallel. Calculating parts from deferent tasks have to be processed one after another.
+While it is serving a CPU-bound task, all other tasks which come later are blocked even they may be very light task with little calculation part in them.In a result, the total responsiveness deteriorates.
+To solve this problem, writing non-blocking code, generating a child process pool to scale out statically or reimplementing the Node.js with multi-thread architecture are general solutions.
+However, writing non-blocking code can damage the readability of the code and hard to be write correctly.
+Tools to generate a child process pool can only set the pool size before runtime. 
+Nowadays tools which are used to implement the Node.js with multi-thread architecture are still unstable (JX-core) or with limited functions (TAGG) also the size of the thread pool size is fixed in runtime as well.
+They do reduce the chance of CPU blocking in processing CPU bound tasks, however, as the size of child process pool or thread pool is fixed when the number of tasks increases CPU blocking will still happen in few or all of the child process or threads. The problem of CPU blocking is still remained. 
+This paper suggests a new solution with auto scaling mechanism to generate proper number of child processes to process tasks as soon as possible in order to avoid CPU blocking.
+
+\section{Introduction of Node.js}
+% ??????? I/O ???????????JavaScript?????, Google Chrome?V8
+Node.js is developed as server side JavaScript environment for developing scalable network application, it is implemented with event-driven I/O and its language processor is Google Chrome's V8 engine.
+% ????? JavaScript ???????????. ???????????????????????????????????\cite{node}. 
+
+
+%\subsection{The single-thread architecture of Node.js and its problem}
+%\begin{figure}[tb]
+%  %\includegraphics[width=8.5cm,clip]{node.eps}
+%  \caption{Node.js ???????????(\cite{nodeloop}????)}
+%  \label{node}
+%\end{figure}
+
+\begin{figure}[tb] 
+	\includegraphics[width=8.0cm,clip]{img/node.eps}
+	\caption{<caption>} 
+	\label{ . . . } 
+\end{figure}\
+
+\begin{figure}[t]
+	\includegraphics[width=8.0cm]{img/concurrency.eps}
+	\caption{fdfdf} 
+	\label{dfd} 
+\end{figure}
+Node.js is implemented with non-blocking I/O and asynchronous events. Refer to Graph~\ref{node}, when process is launched, an event loop which is implemented with single thread, will be launched.
+Internet requests will then be caught by this loop continually. CPU processing is processed in this single-thread loop, however I/O processing accoutered during processing will be sent to another I/O thread.
+After I/O processing, results will be returned to event loop thread with callback function. CPU processing in callback function will be processed here.
+Normally, I/O processing takes much longer then CPU processing, therefore, non-blocking I/O architecture will reduce the total waiting time.
+
+
+\section{CPU blocking problem of Node.js}
+As introduced in the last section, event loop is implemented with a single thread and calculating part in a task is processed in this thread. In a macro view tasks can be processed parallels, however calculating part from different task has to be processed one after another. For I/O bound task such as read data from Database or read write files to the file system, it almost does not impact the responsiveness. However for CPU-bound tasks, it will take fairly longer time for node.JS process to calculate, when it is calculating the next task is come, this task will be blocked. Even it may be a very light task with little calculating part in.
+The former task will be processed promptly but the next task has to wait until last one in finished. 
+The next task delays or may be fail due to connection overtime. 
+When lots of CPU-bound requests come, responsiveness will decrease significantly or part of them will fail.
+
+Actually, a system with multi CPU or multi core is popular, as one Node.js process uses resource of only one CPU (core, thread), resource on other CPUs remain unused even CPU blocking happened in the CPU the process runs on.
+
+\section{Recent methods}
+To solve the problem of low responsiveness due to the CPU blocking of Node.js, normally, people use non-blocking coding to avoid CPU blocking on code level, or implement child process pool or multi-threadify the Node.js to scale out it statically.
+\subsection{Non-blocking coding}
+Using pure javaScript timer function setTimeout or setInterval and node.js API timer function nextTick or setImmediate to assign a function to the next loop cycle. That means calculating part is separated into several slice and set to different loop cycle. When several tasks come together, calculating part will be slice and each slice of these tasks will be processed serially, but in a macro view, tasks begin to be processed at almost the same time and finished as soon as possible.
+
+However, non-blocking code is not friendly for reading, and there may be some trouble in scope. Also, for developer with litter experience, where to insert the timer function is difficult. Additionally, tasks are still processed in a single CPU, other CPU resource will still remain unused. 
+
+\subsection{Child process pool}
+To process tasks parallel, people launch several child processes to create a child process pool.
+tasks can be assigned to each child process.
+Also, tasks are assigned under 2 types of rules in usual.
+
+\begin{itemize}
+\item Function base \\
+Distinguish different types of tasks and check the processing, then assign different type of processing to different types of child process in advance.
+When request comes, check this request and let proper child process to process it.
+
+\item Idle First \\
+When request comes, let idle child process to process it regardless its type of processing.
+
+\end{itemize}
+
+To achieve this, we often use inner module Cluster or extras module fork\_pool or node worker pool.
+Cluster is a HTTP specified module with process scheduler to assign requests from the Internet to each child process. When the program is executed, a master process will be launched and it will generate several child process. When a client connect to the port the master process is listening (Actually the port number is set up in the child program), master will pick up a child process and hand off the connection.
+In the recent stable version of node.js (v0.10.26), there is no algorithm of scheduling. Child process is picked up by the OS with OS's scheduling rule. That result 'chosen few' phenomenon (OS chooses few child process to process in order to avoid context switch) so that waiting queue appears in these few processes and CPU blocking happens. Instead, in the newer developing version (above v0.11.2), round robin algorithm is implemented for scheduling. 'Chosen few' phenomenon is avoid when the number of concurrently requests is not bigger than that of child processes.
+
+fork\_pool and node worker pool are wraps of inner module child\_process. It is easy to generate a pool of child process but the task scheduling have to be implemented by developer.
+
+For all of the modules introduced above, Number of child process can only be defined in the program or set as an option at the command line statically before launching the master process. Number of child process can not be changed during the runtime.
+
+When lots of requests come concurrently, CPU blocking will still happen in part of child process. 
+
+\subsection{Multithreading}
+There are 2 ways to generate external thread to process parallel.
+
+\begin{itemize}
+\item Multiply threads with C++ p-thread\\
+This can be implemented with external module called WebWorker-threads or TAGG.
+These modules use C++ to implement plug-ins under the Javascript processor - V8 engine, to generate p-threads. 
+Put the part of program which needs to be processed parallel to the V8 level and let each p-thread to process that.
+As p-thread is implemented under javascript processor, modules of Node.js or native function of Node.js can not be used which means functionality is limited. 
+
+
+\item Multiply the V8 instances\\
+There is a Node.JS distribution called JXcore, which generates several V8 instance threads to create thread pool.
+It can inherit almost all feature of Node.js, however it is still not stable and close-source (Source code will be opened in release version).
+Most importantly, before launching JXcore, the number of instance threads has to be setup in the command line.
+Therefor it has the same architecture with child process pool and has the same weakness.
+
+\end{itemize}
+
+\section{Auto scaling}
+This paper propose and implement an auto-scaling system for Node.js by extending the child-process pool. 
+In this paper, to simplify, we consider a simple use case that the system gets the GET requests from the Internet then return the response in string form after internal processing.
+
+In this system, getting request and processing are separated. Requests are sent to each child processes properly and generating new child process or terminate surplus child process automatically according to the amount of requests.
+
+The adjust of child-process is under the rules below.
+
+\begin{itemize}
+\item Just-in-time generation:\\
+Generating a new child process when there is no idle child process available.
+\item Delay termination:\\
+Kill a child process if it has been idle for specific time.
+\end{itemize}
+We use process pool instead of multi-thread because it is hard to keep stability and functionality at the same time.
+Also when extending to cloud environment, process architecture with web socket as its communication component is easier to be implemented.
+
+\subsection{System achitectrue}
+
+\begin{figure}[t]
+	\includegraphics[width=8.0cm]{img/system.eps}
+	\caption{fdfdf} 
+	\label{dfd} 
+\end{figure}
+
+Refer to Graph~\ref{architecture}, proposal system is designed with 3 layers: Master-Cooperator-Worker.
+\begin{itemize}
+\item Master is facing to Internet to receive requests. Also, it plays as a role of generating Cooperator, terminating Cooperator and monitoring Cooperator. All of the recent Cooperators become over-loaded, it will (launch a new VM instance and) generate a new Cooperator and insert it into Cooperator queue automatically.
+
+\item Cooperator manages several Worker processes. In the cloud environment, 1 Cooperator is set in 1 VM instance.
+request send from master is stored here and it generates / terminates / monitors workers. To keep high responsiveness, the number of workers which one Cooperator can manage has a limit.
+
+\item Worker is the process which finally processes the request.
+
+\item Over-load status of cooperator
+It is a status in the cooperator. As CPU source in one machine is limited, We use a threshold control the request load in one single cooperator. If the number of request which are been processing in a cooperator bigger than this threshold, this cooperator will be the state of over-load. Since that launch a new VM with a cooperator will take fairly long time, master will still to send requests to the former over-loaded cooperator to let these new requests be processed as soon as possible.
+
+\end{itemize}
+
+
+\subsection{Implementation}
+\subsubsection{Master}
+\begin{itemize}
+	\item HTTP module\\
+	HTTP module, which is a native module of Node.js, has included to handle HTTP request as the master is the only process facing to the Internet.
+
+	\item Communication with cooperators.\\
+	As cooperators may be in isolated machines or VM instances, we use socket.IO to implement the communication function. The master process is set up as a socket.IO server for all cooperators.
+
+	The communication between the master and cooperators includes sending request to cooperators and receiving responses from cooperators. Also the status of cooperators such as ready, over-load, bye is sent via socket.IO module.
+
+	\item Task object\\
+	When a request is caught by the master, master will make a task object. This object contains request object and response object generated by HTTP module and random ID.
+
+	\item Cooperator object\\
+	When cooperator sends a ready message, master will make a cooperator object base on the socket information.
+	Cooperator object contains the socket.IO object of cooperator, threshold of number of workers and numbers current processing workers.
+
+	\item Task queue\\
+	After task objects are made, they are stored into a queue before it is sent to a cooperator. Task object at the head of the queue will be send to a cooperator first. 
+
+	When the task object is sent to cooperator object, this task object will be stored in the task hash in the cooperator. However, even the task object is sent to a worker by cooperator, the task object will still stored in the hash. Only when the response for the task is finished, the task object will finally be removed from the hash.
+
+	\item Cooperator manager and list\\
+	To manager cooperators, we implement a cooperator manager. A list for storing the cooperator is implemented.
+	After a cooperator object is made, cooperator object will be added to this list. Oldest one is at the head.
+	Also cooperator manager takes charges of generating a new worker, assigning tasks to proper cooperator and remove cooperator object when the cooperator manager receive a bye message from it.
+
+	\item New cooperator generation \\
+	We use inner module child\_process.exec() to execute a command in order to launch a Cooperator.
+	In the cloud environment, after the command is executed, a cloud instance will be launched. Here in the VM instance, a script to launch a cooperator has been set up beforehand.
+
+	\item Request scheduler\\
+	We use a interval method to implement a scheduler to monitor the request queue and cooperator queue and send request to proper cooperator. The reason to use interval method is to avoid CPU blocked in this process.
+
+\end{itemize}
+
+\subsubsection{Cooperator}
+\begin{itemize}
+	\item Communication with master\\
+	As we mentioned in the master section, we use socket.IO to implement the communication function. Here a cooperator process is set up as a socket.IO client for the master.
+
+	\item Generation of new worker\\
+	Native module called child\_process is used to generate a new child process, which is called worker in the proposal solution. When fork() method is executed, a worker will be launched and a object of the worker will be return to a variable so that we can operate the worker in the cooperator.
+
+	\item Communication with workers\\
+	As a cooperator and its child processes are in the same machine or in the same VM instance, we use native message passing functions provide by the native module child\_process. As a result we can reduce the overhead rather than using an third-party one additionally.
+
+	The communication between cooperator and workers includes sending requests to workers and receiving response from workers. Also the status of cooperator such as ready, busy and bye is sent via massages.
+
+	\item Request queue\\
+	Similar to the request queue in the master requests from master are stored into a queue before it is sent to a worker. Request at the head of the queue will be send first.
+
+	\item Worker manager and pools\\
+	To manager workers, we implement a worker manager. In addition, there is two pools for store worker objects. One is called idle pool, which is used to store workers whose status is ready (ready to accept a new request). The other one is called busy pool, workers which is processing request will be move into busy pool.
+
+	The worker manager take charges of generating a new worker, kill surplus workers, picking up an idle worker from idle pool and let scheduler pass a request to it, putting busy worker (worker which is processing a request) to busy pool and putting idle worker (worker which finished processing) back to idle pool.
+
+	Especially, when request scheduler asks the worker manager to generate a new worker, the worker manager will compare the length of request queue with the number of current idle workers, only if the length of request queue is bigger worker manager will generate a new worker in order to avoid surplus generation.
+
+	\item New worker generation\\
+	We use inner module child\_process.fork() to launch a child\_process script.
+
+	\item Request scheduler\\
+	Similar to the request scheduler in a cooperator, we use a interval method to implement a scheduler to monitor the request queue and worker pools. Scheduler always pick a request from the head of the request queue and ask worker manager to pick an idle worker for passing request. If there is currently no idle worker, scheduler will ask worker manager to generate a new worker and ask worker manager intervals until worker manager pick up an idle worker. Here the interval function also make it possible to adjust the frequency of picking up requests. As generating a new worker will take time, before a new worker is ready, a current busy worker may finish its work and becomes idle. Increase the interval will give worker manager a chance to reuse busy workers and save computing resource.
+
+	\item Suicide timer\\
+	After all responses has been sent to the master, a timer will be active, when the time is up, cooperator will send bye message to master and terminate it self.
+	When a new request is send to the cooperator, the timer will be removed.
+
+
+\end{itemize}
+
+\subsubsection{Worker}
+\begin{itemize}
+	\item Communication with cooperator\\
+	As we mentioned in the cooperator section, we use native method of child\_process to implement the communication function. Here we can invoke message method of process object to send message and use on method to listen message from cooperator. 
+	\item HTTP module compatible method\\
+	In order to let minim the change in current code, we implement some HTTP module compatible method here, so that in the main process function people can write method with the same name to the HTTP module such as write, writeHead, end to send response.
+
+	\item Suicide timer\\
+	After all end method has been invoked, a timer will be active, when the time is up, worker will send bye message to cooperator and terminate it self.
+	When a new request is send to the cooperator, the timer will be removed.
+
+\end{itemize}
+
+\subsection{Way to work}
+\begin{itemize}
+\item Initialization\\
+When master process is launched, it will launch a cooperator process in the same instance defaults. When this cooperator is ready, it will be added to the cooperator queue in the master. At the same time, cooperator will launch several workers of the number which is the same to the cores of CPUs. Workers will send messages to notice cooperator that they are ready. After that worker manager in the cooperator will detect the message and put them to the idle pool. Now the system is initialized and ready to receive requests.
+
+\item Request scheduling at master\\
+When a request is sent to the master from the Internet, it will first add this request to request queue. Scheduler keeps checking the request queue and the cooperator queue. At this time scheduler detects the request and checks cooperator queue from the oldest one. Then when the scheduler find the first cooperator which is not in the status of over-load it will send the request to the cooperator. If there is no such cooperator, the scheduler will send request to the oldest cooperator and executes a command to launch a new cooperator with new VM instance.
+
+\item Request scheduling at cooperator\\
+After a request is sent to a cooperator, it will add request to the request queue in the cooperator. Scheduler in the cooperator keeps monitoring the request queue and and now it detects the new request, it ask the worker manager for a idle worker. If there is any idle worker in the idle pool, the worker manager will return a worker object to the scheduler, otherwise it will notice the scheduler that no idle worker does exist. When the scheduler get the idle worker it will send the request at the heat to this worker, otherwise it will ask worker manager to generate a new worker and keep checking until idle worker is returned. As we mentioned at the Implementation section, this time worker manager will generate a new worker base on the number of the recent idle worker and the length of request queue. After the worker is ready, worker manager will catch the ready message and put the worker object to the idle pool. When scheduler check ask the worker manager next time, this new worker will be return to the scheduler.
+
+\item Processing the request\\
+After a request is sent to a worker, worker will read the parameter string from the request and invoke the main function to do request processing.
+
+\item Sending responses\\
+In a worker response contents will be send with HTTP compatible method writeHead, write and end. When these methods are invoked, worker will send a message with the type name, which is the same to the method name, contents, and request ID to the cooperator. Cooperator will transform this message to socket.IO message and send it to the master. When master catch this message, it will find the origin response object base on the request ID then invoke the HTTP method base on the type to send contents to client. When the end method is invoked, the request and response object will be remove from the task hash in the cooperator object.
+
+\end{itemize}
+
+
+\section{Evaluation tests}
+
+
+% \begin{figure}
+% \begin{lstlisting}[frame=single]
+% function fib(n){
+% 	if (n < 2)
+%   	return 1;
+% }else{ 
+% 	return fib(n - 2) + fib(n - 1);
+% }
+
+% \end{lstlisting}
+% \label{fib}
+% \caption{Calculating function.}
+% \end{figure}
+
+
+\begin{figure}[tb]
+	\hbox to\hsize{\hfil
+		\includegraphics[width=6.0cm]{img/fib_func.eps}
+	\hfil}
+	\caption{Fibonacci number calculating function.} 
+	\label{fig:fib_func} 
+\end{figure}
+
+\begin{table}[tb]
+\caption{Environment of benchmark test.}
+\label{env}
+\centering
+	\hbox to\hsize{\hfil
+	\begin{tabular}{cl}
+		\hline
+		CPU  & Intel Xeon E5-2650 v2 @ 2.60GHz (8 cores)\\
+		Memory  & 32GB\\
+		OS &  CentOS 6.5 (Linux version 2.6.32-431.el6.x86\_64)\\
+		Node.js & v0.10.26\\
+		\hline
+	\end{tabular}
+	\hfil}
+\end{table}
+
+% \begin{table}[!t]
+% \caption{Environment of benchmark test.}
+% \label{env}
+%   \begin{tabular}{ccccc}
+% 	\hline
+% 	\# of request in the step 2 & Method  &  processing time & waiting time & total time \\
+% 	\hline
+% 	10  &	Recent		&	0.74	&	14.89	&	15.63	\\
+% 		&	Proposal	&	1.89	&	3.69	&	5.60	\\
+% 	\hline
+% 	20	&	Recent		&	0.55	&	15.53	&	16.09	\\
+% 		&	Proposal	&	1.89	&	4.52	&	6.42	\\
+% 	\hline
+% 	50	&	Recent		&	0.89	&	15.64	&	16.53	\\
+% 		&	Proposal	&	1.97	&	6.34	&	8.31	\\
+% 	\hline
+%   \end{tabular}
+% \end{table}
+\begin{figure}[t]
+	\hbox to\hsize{\hfil
+		\includegraphics[width=8.0cm]{img/fib_result.eps}
+	\hfil}
+	\caption{Result of preparation test.} 
+	\label{fig:result_pre} 
+\end{figure}
+
+\begin{table}[tb]
+\caption{The reduce rate of proposal solution compare with recent solution.}
+\label{tab:raduce_rate_fib}
+\hbox to\hsize{\hfil
+	\begin{tabular}{ccccc}
+		\hline
+		\hline
+		\# in the step 2  &  processing time & waiting time & total time \\
+		\hline
+		10  &	-155\%	&	75\%	&	64\%	\\
+		20	&	-246\%	&	71\%	&	60\%	\\
+		50	&	-121\%	&	59\%	&	50\%	\\
+		\hline
+		\hline
+	\end{tabular}\hfil}
+\end{table}
+
+
+
+\subsection{Preparation test}
+
+The propose of this test is to check out how response time of \'late coming\' requests of light task can be reduced with the proposal method when server is already in the full stress status.
+
+In this test, the task is to calculate the specific Fibonacci number. We use cluster module to create a HTTP server with 100 child processes in the child process pool as the recent solution. Server implemented with proposal method is consist with one Master and one Cooperator. In this case, to generate the similar condition, the initial number of Works of the proposal solution is set to 100. 
+
+The program to calculate Fibonacci number is shown in the figure X. And the environment is shown in the figure Y. In this test we only consider the local environment.
+
+This test is separate into 2 steps, in the first step 100 requests of calculating 40th Fibonacci number will be sent to the server concurrently to generate full stress status.
+In 5 seconds, it is the second step, 10 / 20 / 50 requests of calculating 35th Fibonacci number will be sent to the server concurrently.
+Response time and processing time and total time of the requests in the second step will be record.
+
+\subsubsection{result}
+When the number of requests is 10 in the step 2,
+The average of wait time in recent solution is 14.89, processing time is 0.74 and total time is 15.63. While in the proposal solution, value is 1.89, 3.69 and 5.60. The total time is reduced by 64.2\%.
+When the number of requests is increased to 20,
+wait time in recent solution is 15.53, processing time is 0.55 and total time is 16.09. While in the proposal solution, value is 1.89, 4.52 and 6.42. The total	time is reduced by 60.1\%.
+When the number of requests is increased to 20,
+wait time in recent solution is 15.64, processing time is 0.89 and total time is 16.53. While in the proposal solution, value is 1.97, 6.34 and 8.31. The total time is reduced by 49.7\%.
+
+\subsubsection{Discussion}
+Focus on the wait time,
+In the case of proposal solution, because of the auto-scaling mechanism, child processes for requests from step 2 are generated as soon as possible, requests have not to wait until all recent child process to be idle, therefor CPU blocking is avoided.
+In the case of recent solution, is around 15 second. This time is almost equal to the total time of processing 100 tasks of calculating 40th Fibonacci number in the step one with 5 seconds subtracted. It is easy to understand, in the recent solution, because all of the child processes is assigned to the tasks come in step 1. Requests come in the second step have to wait until some of these child processes become idle.However in the proposal solution, even all of the child processes are busy, Cooperator can generate new child processes to handle requests come in the step 2. And the waiting time is almost the time of generating a new process.
+
+However in the case of proposal solution, requests from step 2 took more time then those in recent solution. That is because in the case of proposal solution, requests were being processed with remain tasks from step 1 at the same time, CPU resource for each tasks became less, therefor it took more time to calculate.
+
+Proposal solution have a good performance in reducing the total time of calculation in all three sub tests. 
+However the reduce rate in total time of proposal solution decrease when concurrent number increases. In the case of proposal solution, new child processes has been generated base on the amount of requests from step 2. The more new child processes the server generates, the more CPU resource it will takes. Therefor for each new child process, as the server took more time to generate it, waiting time became longer. Additionally, as more new child processes are generated CPU resource for each became less, gradually processing time became longer. Due to these two reason, eventually total response time for each request became longer.
+
+\subsection{Reality test}
+
+The preparation test shows the utility of processing simple CPU bound task, we design a new test with processing real tasks.
+We use Cluster third module expressjs and our system to implemented a web server, after the web server receive a request, server will process a task described below:
+1. Base on the http request string, read picture file from local file system.
+2. Resize the width of picture to 600px with origin aspect ratio aspect, and add watermark to the picture.
+3. Recognize faces in the picture with pure javascript implemented library face-detect and crop parts of faces with size of 64px x 64px.
+4. Encrypt the resized picture with AES and get text base result.
+5. Compress the result of the last step.
+6. Write compressed data into a file.
+After each step is finished, program will send a response content of processing time.
+
+In this task we used several third-part and native modules. In the second and third step, we use a cairo backed canvas implementation for NodeJS node-cavans, so that we could do some simple picture processing with native javascript. In the forth step we used pure javascript encryption module called cropto-JS. In the fifth step native module zlib is used to make gzip compatible compression. In the first and last step we used a native module fs to operate local files.
+
+Before benchmark test, we run each task serially and record each processing time of each step. Refer to the Fig. recognition took 65.7.
+% of the processing time and encryption took 31.4%, others shared the rest 2.9%.
+
+Similar to the reality test is separate into 2 step. In the first step, requests for each picture is sent to server concurrently, which means there are 100 requests are sent to server concurrently.
+In 5 seconds, it is the second step, 10 / 20 / 50 requests for first 10th / 20th / 50th pictures will be sent to the server concurrently.
+
+Response time and processing time and total time of the requests in the second step will be record.
+
+
+\subsubsection{Result}
+When the number of requests is 10 in the step 2,
+The average of wait time in recent solution is 20.04, processing time is 3.93 and total time is 23.97. While in the proposal solution, value is 6.88, 10.28 and 17.16, The total time is reduced by \%. 
+
+When the number of requests is increased to 20,
+wait time in recent solution is 11.83, processing time is 7.56 and total time is 19.40. While in the proposal solution, value is 6.16, 18.59 and 24.75. The total time is reduced by \%.
+
+When the number of requests is increased to 20,
+wait time in recent solution is 15.40, processing time is 9.47 and total time is 24.87. While in the proposal solution, value is 14.08, 13.33 and 27.42. The total time is reduced by \%.
+
+% \begin{table}[!t]
+% \caption{Environment of benchmark test.}
+% \label{env}
+%   \begin{tabular}{ccccc}
+% 	\hline
+% 	\# of request in the step 2 & Method  &  processing time & waiting time & total time \\
+% 	\hline
+% 	10  &	Recent		&	3.93	&	20.04	&	23.97	\\
+% 		&	Proposal	&	10.28	&	6.88	&	17.16	\\
+% 	\hline
+% 	20	&	Recent		&	6.16	&	18.59	&	24.75	\\
+% 		&	Proposal	&	11.83	&	7.56	&	19.40	\\
+% 	\hline
+% 	50	&	Recent		&	14.08	&	13.33	&	27.42	\\
+% 		&	Proposal	&	15.40	&	9.47	&	24.87	\\
+% 	\hline
+%   \end{tabular}
+% \end{table}
+\begin{table}[tb]
+\caption{Statistics information of processing pictures.}
+\label{tab:statistics}
+	\hbox to\hsize{\hfil
+		\begin{tabular}{ccccc}
+		\hline
+		\hline
+		Number of pictures	&	MEAN	&	MAX		&	MIN		&	STDEV	\\
+		\hline
+		100 				&	2.05	&	1.24	&	3.10	&	0.379	\\
+		\hline
+		\hline
+		\end{tabular}
+	\hfil}
+\end{table}
+
+\begin{figure}[tb]
+	\includegraphics[width=8.0cm]{img/cv_result.eps}
+	\caption{Result of real problem test.} 
+	\label{fig:result_real} 
+\end{figure}
+
+\begin{table}[tb]
+\caption{The reduce rate of proposal solution compare with recent solution.}
+\label{tab:reduce_rate_cv}
+	\hbox to\hsize{\hfil
+		\begin{tabular}{ccccc}
+			\hline
+			\hline
+			\# in the step 2  &  processing time & waiting time & total time \\
+			\hline
+			10  &	-161\%	&	66\%	&	28\%	\\
+			20	&	-92\%	&	59\%	&	22\%	\\
+			50	&	-9\%	&	29\%	&	9\%	\\
+		\hline
+		\hline
+		\end{tabular}
+	\hfil}
+\end{table}
+
+\subsubsection{Discussion}
+Similar to the preparation test. Using proposal solution, Waiting time of request from step 2 decreased because of the auto-scaling mechanism, while the processing time increased because of the parallel processing with remain tasks from step 1. Also when the number of concurrent request in step 2 increased, both of the waiting time and the processing time increased. Even then, The total time has been reduced. 
+
+However the reduce rate is not so significant as preparation test. 
+Unlike preparation, we used light tasks, here the amount of processing of tasks from step 2 are almost the same to that in the step 1, Server take much more to calculate, therefor it takes much more time in processing. Compared with this, saved waiting time is less significant. Also in this test, task involved with I/O operation, the density of CPU processing in each task is less then that in the preparation test. However the wait time still decreases significantly. In a result, the reduce rate of total time is less then that in the processing test but still save time for requests from step 2.
+In the real problem test, proposal solution still shows the utility.
+
+
+\section{Future work}
+In this paper, we considered the simple use case with getting GET request and then returning the result with string assembled in the request body. 
+However, nowadays web functional applications with Redis, MongoDB, Socket.IO, etc. become more and more popular which implementation in this paper can not achieve.
+Additionally, in this paper, request and response contents is transferred between each components with Socket.IO
+When the size of contents becomes bigger, overhead will be even bigger.
+Also, if old code can be applied without any change, it will be easier to use. 
+
+\section{Conclusion}
+In this paper we focused on the responsiveness deteriorating of Node.js when handling CPU-bound tasks,
+Ordinarily, people use generated child process pool, or multiply thread to scale out statically to handle tasks parallel.
+
+However consider of the functionality and stability, multiply thread is note ideal.
+And in the case of using child process pool, the size of pool cannot be changed during run time as the number of requests growths, tasks can not be served on time. 
+In this paper, we extra the method of implementing child process pool with 3 types of processes to realize auto-scaling. Additionally, we conducted benchmark tests and proved that our method can solve the problem better. However, there are some problems of generality, overhead due to implementation and the convince of using.
+
+\begin{thebibliography}{9}% 文献数が10未満の時 {9}
+\bibitem{node}TILKOV, Stefan; VINOSKI, Steve. Node. js: Using JavaScript to build high-performance network programs. IEEE Internet Computing, 2010, 14.6: 0080-83.
+\bibitem{nodeloop}https://www.packtpub.com/build-network-application-with-node/video
+\bibitem{cpubound}http://neilk.net/blog/2013/04/30/\\why-you-should-use-nodejs-for-CPU-bound-tasks/
+\bibitem{Cluster}http://nodejs.org/api/Cluster.html
+\bibitem{forkpool}https://github.com/tijn/fork\_pool
+\bibitem{tagg}https://github.com/audreyt/node-threads-a-gogo
+\bibitem{webworker}https://github.com/audreyt/node-webWorker-threads
+\bibitem{jxcore}http://jxcore.com/home/
+
+\end{thebibliography}
+
+\end{document}
