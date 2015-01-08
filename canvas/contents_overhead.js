@@ -1,14 +1,39 @@
-var fs = require('fs');
-
+// var fs = require('fs');
+function makeStr(n){
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for( var i=0; i < n+1 ; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    return text;
+}
 function main (req,res) {
-  var m = parseInt(req.path.substr(1));
-  console.log(req);
-  var buffer = fs.readFileSync('./random.txt')
-  var text = buffer.toString('ascii');
-  var output = text.substr(0, 1024*1024*m);
-  var startTime = new Date();
-  res.writeH(output);
-  var time = new Date() - startTime;
-  res.end('\n'+time);
+	var reqArray = req.path.split('/');
+	var m = parseInt(reqArray[2]);
+	var randStr = makeStr(1024);
+	if(reqArray[1]=='L'){
+		var startTime = new Date();
+		for (var i = 0; i < 1<<m; i++) {
+			// res.writeH(randStr);
+			res.writeH('.');
+		};
+		var time = new Date() - startTime;
+	}else if(reqArray[1]=='T'){
+		var startTime = new Date();
+		for (var i = 0; i < 1<<m; i++) {
+			// res.writeH(randStr);
+			res.writeH(randStr);
+		};
+		var time = new Date() - startTime;
+	}else{
+		var output = '';
+		for (var i = 0; i < 1<<m; i++) {
+			// res.writeH(randStr);
+			output += randStr;
+		};
+		var startTime = new Date();
+		res.writeH(output);
+		var time = new Date() - startTime;
+	}
+	res.end('\n'+time);
 }
 module.exports=main
