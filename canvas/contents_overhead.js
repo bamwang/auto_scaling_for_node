@@ -30,7 +30,7 @@ function main (req,res) {
 		// console.log(reqArray[1])
 		var output = '';
 		for (var i = 0; i < m; i++) {
-			res.writeH(randStr);
+			// res.writeH(randStr);
 			output += randStr;
 		};
 		var startTime = new Date();
