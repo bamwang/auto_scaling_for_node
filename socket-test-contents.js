@@ -64,7 +64,8 @@ function Cooperator(socket, maxWorker){
 		var res = _taskList[id].getRes();
 		var html = data.html.toString();
 		// res.writeHead(200, {'Content-Type': 'text/html','Access-Control-Allow-Origin':'*'});
-		res.end(html);
+		var time = ((new Date())/1).toString();
+		res.end(time);
 		_taskNum -- ;
 		//console.log(_taskNum);
 	})
