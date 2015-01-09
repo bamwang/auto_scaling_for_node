@@ -12,18 +12,20 @@ function main (req,res) {
 	var randStr = makeStr(1024);
 	if(reqArray[1]=='L'){
 		var startTime = new Date();
+		res.write('0 - ' + startTime/1 + ' + ');
 		for (var i = 0; i < 1<<m; i++) {
 			// res.writeH(randStr);
 			res.writeH('.');
 		};
-		var time = new Date() - startTime;
+		// var time = new Date() - startTime;
 	}else if(reqArray[1]=='T'){
 		var startTime = new Date();
+		res.write('0 - ' + startTime/1 + ' + ');
 		for (var i = 0; i < 1<<m; i++) {
 			// res.writeH(randStr);
 			res.writeH(randStr);
 		};
-		var time = new Date() - startTime;
+		// var time = new Date() - startTime;
 	}else{
 		var output = '';
 		for (var i = 0; i < 1<<m; i++) {
@@ -31,9 +33,10 @@ function main (req,res) {
 			output += randStr;
 		};
 		var startTime = new Date();
+		res.write('0 - ' + startTime/1 + ' + ');
 		res.writeH(output);
-		var time = new Date() - startTime;
+		// var time = new Date() - startTime;
 	}
-	res.end('\n'+time);
+	res.end();
 }
 module.exports=main
