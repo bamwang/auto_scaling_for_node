@@ -10,10 +10,11 @@ function main (req,res) {
 	var reqArray = req.path.split('/');
 	var m = parseInt(reqArray[2]);
 	var randStr = makeStr(102400);
+	var randStr2 = makeStr(1024*5);
 	if(reqArray[1]=='L'){
 		var startTime = new Date();
 		res.write('0 - ' + startTime/1 + ' + ');
-		for (var i = 0; i < m*100; i++) {
+		for (var i = 0; i < m; i++) {
 			// res.writeH(randStr);
 			res.writeH('.');
 		};
@@ -28,6 +29,7 @@ function main (req,res) {
 		// var time = new Date() - startTime;
 	}else{
 		// console.log(reqArray[1])
+		if(reqArray[1]=='q') randStr=randStr2;
 		var output = '';
 		for (var i = 0; i < m; i++) {
 			// res.writeH(randStr);
