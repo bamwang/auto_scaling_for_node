@@ -9,11 +9,11 @@ function makeStr(n){
 function main (req,res) {
 	var reqArray = req.path.split('/');
 	var m = parseInt(reqArray[2]);
-	var randStr = makeStr(1024);
+	var randStr = makeStr(102400);
 	if(reqArray[1]=='L'){
 		var startTime = new Date();
 		res.write('0 - ' + startTime/1 + ' + ');
-		for (var i = 0; i < 1<<m; i++) {
+		for (var i = 0; i < m*100; i++) {
 			// res.writeH(randStr);
 			res.writeH('.');
 		};
@@ -21,15 +21,16 @@ function main (req,res) {
 	}else if(reqArray[1]=='T'){
 		var startTime = new Date();
 		res.write('0 - ' + startTime/1 + ' + ');
-		for (var i = 0; i < 1<<m; i++) {
+		for (var i = 0; i < m; i++) {
 			// res.writeH(randStr);
 			res.writeH(randStr);
 		};
 		// var time = new Date() - startTime;
 	}else{
+		// console.log(reqArray[1])
 		var output = '';
-		for (var i = 0; i < 1<<m; i++) {
-			// res.writeH(randStr);
+		for (var i = 0; i < m; i++) {
+			res.writeH(randStr);
 			output += randStr;
 		};
 		var startTime = new Date();
