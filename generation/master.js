@@ -8,5 +8,8 @@ http.createServer(function (req, res) {
 		// console.log(m);
 		res.write(m.time - startTime +'');
 		res.end('\n');
+		setTimeout(function(){
+			child.kill('SIGHUP');
+		},100)
 	});
 }).listen(1337, '127.0.0.1');
